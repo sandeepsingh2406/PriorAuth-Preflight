@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from src.models import PayerChecklist
+from src.models import ExtractedField, PayerChecklist
 
 CHECKLISTS_PATH = Path(__file__).resolve().parent.parent / "data" / "checklists.yaml"
 
@@ -22,3 +22,36 @@ def lookup_payer_checklist(payer_id: str, path: Path = CHECKLISTS_PATH) -> Payer
         if checklist.payer_id == payer_id:
             return checklist
     raise ValueError(f"Unknown payer_id {payer_id!r}; known payers: {sorted(ids)}")
+
+
+def _is_verbatim(note: str, quote: str | None) -> bool:
+    """True if the quote is non-blank and appears exactly as written in the note."""
+    return quote is not None and quote.strip() != "" and quote in note
+
+
+def validate_citations(note: str, fields: list[ExtractedField]) -> list[ExtractedField]:
+    """Drop any evidence whose quote is not a verbatim substring of the note.
+
+    Matching is exact: no case folding, no whitespace changes. A field that fails
+    becomes not found, with value, quote and date cleared, because they came from
+    evidence that cannot be verified. Fields are never upgraded to found. Inputs
+    are not modified.
+    """
+    results = []
+    for field in fields:
+        conflicting = [q for q in field.conflicting_quotes if _is_verbatim(note, q)]
+        if field.found and _is_verbatim(note, field.quote):
+            results.append(field.model_copy(update={"conflicting_quotes": conflicting}))
+        else:
+            results.append(
+                field.model_copy(
+                    update={
+                        "found": False,
+                        "value": None,
+                        "quote": None,
+                        "date": None,
+                        "conflicting_quotes": conflicting,
+                    }
+                )
+            )
+    return results

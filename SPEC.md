@@ -50,7 +50,7 @@ Out of scope (do not build, even if easy):
 1. Input: order (JSON), clinical note (text), payer id.
 2. `lookup_payer_checklist(payer_id)` returns the required items for that payer.
 3. `extract_fields(note, checklist)` returns each required field with a value and the exact quoted span from the note, or `found = false`.
-4. `validate_citations(note, fields)` drops any field whose quote is not found verbatim in the note and marks it `found = false`.
+4. `validate_citations(note, fields)` drops any field whose quote is not found verbatim in the note and marks it `found = false`. Matching is exact (no case or whitespace changes), and an empty or blank quote never counts. A failed field also loses its `value`, `quote` and `date`. A field is never upgraded to found. `conflicting_quotes` are filtered the same way, so only verbatim ones remain.
 5. `check_packet(fields, checklist, order)` compares to the checklist (including recency windows) and returns the gaps.
 6. Route:
    - No gaps: status `READY`.
@@ -127,4 +127,5 @@ One screen. Left: choose a case or paste a note, choose a payer, Run. Right: sta
 - Checklists are illustrative, not real payer policy.
 - Synthetic notes are cleaner than real ones.
 - The evaluation set is small.
+- `validate_citations` verifies the quote, not the `date` the model attaches to it. A model could quote a real lab line but report a wrong date, which would skew the recency check. Dates in notes come in mixed styles, so verifying them needs a date parser that is not built.
 - It checks documentation completeness, not clinical appropriateness.
