@@ -47,7 +47,7 @@ def run_once(
     results = []
     for index, case_id in enumerate(case_ids, start=1):
         order, note = load_case(case_id, cases_dir)
-        run = analyze_packet(order, note, llm=llm, audit_path=audit_path)
+        run = analyze_packet(order, note, llm=llm, audit_path=audit_path, draft=False)
         result = evaluate_case(case_id, labels[case_id], note, run)
         results.append(result)
         if progress:

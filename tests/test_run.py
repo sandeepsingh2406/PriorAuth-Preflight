@@ -4,7 +4,7 @@ import datetime
 import pytest
 
 from src.agents import analyze_packet
-from src.models import ExtractedField, ExtractionResult, Order
+from src.models import DraftText, ExtractedField, ExtractionResult, Order
 from src.run import format_report, load_case, main
 
 NOTE = (
@@ -30,6 +30,10 @@ def _f(name: str, quote: str | None, **kw: object) -> ExtractedField:
 
 def _llm(*fields: ExtractedField):
     return lambda prompt: ExtractionResult(fields=list(fields))
+
+
+def _outreach(prompt: str) -> DraftText:
+    return DraftText(subject="Items needed for the packet", body="Please send the listed items.\nThank you.")
 
 
 def test_report_shows_status_each_gap_and_its_evidence() -> None:
@@ -110,11 +114,12 @@ def test_unknown_case_is_a_clear_error() -> None:
 
 def test_main_prints_the_report(capsys: pytest.CaptureFixture[str]) -> None:
     """End to end through main with a fake model: prints the case and its status, exit 0."""
-    code = main(["--case", "hand_01"], llm=_llm(), env_file=None)
+    code = main(["--case", "hand_01"], llm=_llm(), outreach_llm=_outreach, env_file=None)
     out = capsys.readouterr().out
     assert code == 0
     assert "hand_01" in out
     assert "NOT_READY" in out  # the fake model found nothing, so every item is missing
+    assert "Draft request to the care team (not sent):" in out
 
 
 def test_main_without_a_model_name_explains_the_problem(
@@ -156,3 +161,41 @@ def test_report_shows_unreadable_passages_for_the_reviewer() -> None:
     assert "NEEDS_REVIEW" in text
     assert f'Unreadable text: "{bad}"' in text
     assert "Escalation reason:" in text
+
+
+def _ready_fields_without_biomarker() -> list[ExtractedField]:
+    return [
+        _f("diagnosis", "SYNTHETIC NOTE"),
+        _f("stage", "Staging: Stage II (cT2 N0 M0)."),
+        _f("biomarker", None),
+        _f("recent_lab", "Labs: CBC drawn 2026-04-22.", date=datetime.date(2026, 4, 22)),
+        _f("treatment_plan", "Plan: Start Examplumab 200 mg IV every 21 days."),
+    ]
+
+
+def test_report_prints_the_draft_and_says_it_was_not_sent() -> None:
+    run = analyze_packet(
+        ORDER, NOTE, llm=_llm(*_ready_fields_without_biomarker()), draft=True, outreach_llm=_outreach
+    )
+    text = format_report(run)
+    assert "NOT_READY" in text
+    assert "Draft request to the care team (not sent):" in text
+    assert "Subject: Items needed for the packet" in text
+    assert "Please send the listed items." in text and "Thank you." in text
+    assert "Requested items: biomarker" in text
+
+
+def test_report_says_when_the_draft_could_not_be_written() -> None:
+    def broken(prompt: str) -> DraftText:
+        raise RuntimeError("boom")
+
+    run = analyze_packet(
+        ORDER, NOTE, llm=_llm(*_ready_fields_without_biomarker()), draft=True, outreach_llm=broken
+    )
+    text = format_report(run)
+    assert "Draft request: not generated (Outreach step failed: RuntimeError)" in text
+
+
+def test_report_without_a_draft_has_no_draft_section() -> None:
+    run = analyze_packet(ORDER, NOTE, llm=_llm(*_ready_fields_without_biomarker()))
+    assert "Draft request" not in format_report(run)

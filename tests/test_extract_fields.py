@@ -94,12 +94,14 @@ def test_wrong_result_type_from_the_model_is_refused() -> None:
 
 
 def test_default_path_goes_through_the_sdk_and_is_blocked_in_tests(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, network_attempts: list[str]
 ) -> None:
     """Without an injected llm, the real SDK runner is used; the test guard stops it."""
     monkeypatch.setenv("MODEL_DEV", "test-model")
     with pytest.raises(NetworkCallInTest):
         extract_fields(NOTE, lookup_payer_checklist("payer_a"))
+    assert len(network_attempts) == 1
+    network_attempts.clear()  # expected, so the autouse guard does not fail this test
 
 
 # --- the agent definition ---------------------------------------------------

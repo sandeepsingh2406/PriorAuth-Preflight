@@ -220,3 +220,105 @@ def test_audit_log_never_contains_the_unreadable_text(tmp_path: Path) -> None:
     _run_u(_complete(), [BAD], log)
     assert "EG?R" not in log.read_text()
     assert _audit(log)[0]["status"] == "NEEDS_REVIEW"
+
+
+# --- the Outreach draft ----------------------------------------------------------
+
+from src.models import DraftText  # noqa: E402
+
+
+class FakeOutreach:
+    """Stands in for the Outreach model and records every prompt it is given."""
+
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+
+    def __call__(self, prompt: str) -> DraftText:
+        self.prompts.append(prompt)
+        return DraftText(subject="Items needed", body="Please send the listed items.")
+
+
+def _not_ready_fields() -> list[ExtractedField]:
+    return _replace(_complete(), _f("biomarker", None))
+
+
+def test_no_draft_unless_asked(tmp_path: Path) -> None:
+    """Drafting is opt-in, so a plain run makes no extra model call."""
+    run = _run(_not_ready_fields(), tmp_path / "log.jsonl")
+    assert run.report.status == "NOT_READY"
+    assert run.draft is None and run.draft_error is None
+    assert "draft_request" not in run.tools_called
+
+
+def test_not_ready_packet_gets_a_draft_when_asked(tmp_path: Path) -> None:
+    outreach = FakeOutreach()
+    log = tmp_path / "log.jsonl"
+    run = analyze_packet(ORDER, NOTE, llm=_llm(_not_ready_fields()), audit_path=log, draft=True, outreach_llm=outreach)
+    assert run.report.status == "NOT_READY"
+    assert run.draft is not None
+    assert (run.draft.subject, run.draft.requested_items) == ("Items needed", ["biomarker"])
+    assert run.tools_called == PIPELINE + ["draft_request"]
+    assert _audit(log)[0]["tools_called"] == PIPELINE + ["draft_request"]
+
+
+def test_ready_packet_gets_no_draft(tmp_path: Path) -> None:
+    outreach = FakeOutreach()
+    run = analyze_packet(ORDER, NOTE, llm=_llm(_complete()), audit_path=tmp_path / "log.jsonl", draft=True, outreach_llm=outreach)
+    assert run.report.status == "READY" and run.draft is None
+    assert outreach.prompts == []
+    assert run.draft_error is None and run.tools_called == PIPELINE  # no attempt at all, not even a failed one
+
+
+def test_needs_review_packet_goes_to_a_person_without_a_draft(tmp_path: Path) -> None:
+    """Conflicts are read by a person first; Outreach is never called."""
+    outreach = FakeOutreach()
+    stage = _f("stage", "Staging: Stage IIIB (cT3 N2 M0).", conflicting_quotes=["stage IV disease"])
+    run = analyze_packet(
+        ORDER, NOTE, llm=_llm(_replace(_complete(), stage)), audit_path=tmp_path / "log.jsonl", draft=True, outreach_llm=outreach
+    )
+    assert run.report.status == "NEEDS_REVIEW" and run.draft is None
+    assert outreach.prompts == []
+    assert run.draft_error is None and "draft_request_failed" not in run.tools_called
+
+
+def test_needs_review_with_missing_items_still_gets_no_draft(tmp_path: Path) -> None:
+    """Unreadable text plus a missing biomarker: a person looks first, nothing is drafted."""
+    outreach = FakeOutreach()
+    run = analyze_packet(
+        ORDER,
+        NOTE_WITH_BAD,
+        llm=_llm_u(_not_ready_fields(), [BAD]),
+        audit_path=tmp_path / "log.jsonl",
+        draft=True,
+        outreach_llm=outreach,
+    )
+    assert run.report.status == "NEEDS_REVIEW" and run.draft is None
+    assert outreach.prompts == []
+    assert run.draft_error is None and "draft_request_failed" not in run.tools_called
+
+
+def test_an_outreach_failure_leaves_the_packet_not_ready_and_is_audited(tmp_path: Path) -> None:
+    """If the Outreach model fails, the analysis stands; only the draft is missing."""
+
+    def broken(prompt: str) -> DraftText:
+        raise RuntimeError("upstream said: Biomarkers: EGFR exon 19 deletion detected.")
+
+    log = tmp_path / "log.jsonl"
+    run = analyze_packet(ORDER, NOTE, llm=_llm(_not_ready_fields()), audit_path=log, draft=True, outreach_llm=broken)
+    assert run.report.status == "NOT_READY"
+    assert run.draft is None and run.draft_error == "RuntimeError"
+    assert run.tools_called == PIPELINE + ["draft_request_failed"]
+    (line,) = _audit(log)
+    assert line["status"] == "NOT_READY"
+    assert "EGFR" not in log.read_text()
+
+
+def test_default_outreach_path_uses_the_sdk_and_a_blocked_call_is_a_draft_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, network_attempts: list[str]
+) -> None:
+    """With no fake, drafting goes through the real SDK (blocked in tests) and fails soft."""
+    monkeypatch.setenv("MODEL_DEV", "test-model")
+    run = analyze_packet(ORDER, NOTE, llm=_llm(_not_ready_fields()), audit_path=tmp_path / "log.jsonl", draft=True)
+    assert run.draft is None and run.draft_error == "NetworkCallInTest"
+    assert len(network_attempts) == 1
+    network_attempts.clear()  # expected

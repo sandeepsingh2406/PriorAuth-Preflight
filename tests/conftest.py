@@ -8,19 +8,33 @@ class NetworkCallInTest(RuntimeError):
     """Raised if a unit test reaches the real Agents SDK runner."""
 
 
-def _refuse(*args: object, **kwargs: object) -> None:
-    raise NetworkCallInTest("A unit test tried to call the real model. Inject a fake llm instead.")
+@pytest.fixture
+def network_attempts(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Block every SDK run entry point and record each attempt.
+
+    A test that expects a blocked call must clear this list. The autouse fixture below
+    fails any test that leaves an attempt behind, so a swallowed error cannot hide one.
+    """
+    import agents
+
+    attempts: list[str] = []
+
+    def refuse(*args: object, **kwargs: object) -> None:
+        attempts.append("blocked")
+        raise NetworkCallInTest("A unit test tried to call the real model. Inject a fake llm instead.")
+
+    monkeypatch.setattr(agents.Runner, "run_sync", refuse)
+    monkeypatch.setattr(agents.Runner, "run", refuse)
+    monkeypatch.setattr(agents.Runner, "run_streamed", refuse)
+    return attempts
 
 
 @pytest.fixture(autouse=True)
-def _no_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Remove the API key and make every SDK run entry point raise."""
+def _no_network(monkeypatch: pytest.MonkeyPatch, network_attempts: list[str]):
+    """Remove the API key, and fail the test if anything tried to reach the real model."""
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    import agents
-
-    monkeypatch.setattr(agents.Runner, "run_sync", _refuse)
-    monkeypatch.setattr(agents.Runner, "run", _refuse)
-    monkeypatch.setattr(agents.Runner, "run_streamed", _refuse)
+    yield
+    assert not network_attempts, "A test tried to call the real model; the call was blocked but not expected"
 
 
 @pytest.fixture(autouse=True)

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from src.agents import AnalysisRun, ExtractionLLM, analyze_packet, model_name
+from src.agents import AnalysisRun, ExtractionLLM, OutreachLLM, analyze_packet, model_name
 from src.models import Order
 from src.tools import PROJECT_ROOT
 
@@ -53,6 +53,12 @@ def format_report(run: AnalysisRun) -> str:
     lines += [f'Unreadable text: "{passage}"' for passage in report.unreadable_passages]
     if report.escalation_reason:
         lines.append(f"Escalation reason: {report.escalation_reason}")
+    if run.draft is not None:
+        lines += ["", "Draft request to the care team (not sent):", f"  Subject: {run.draft.subject}", ""]
+        lines += [f"  {body_line}".rstrip() for body_line in run.draft.body.splitlines()]
+        lines += ["", f"  Requested items: {', '.join(run.draft.requested_items)}"]
+    elif run.draft_error:
+        lines += ["", f"Draft request: not generated (Outreach step failed: {run.draft_error})"]
     return "\n".join(lines)
 
 
@@ -60,6 +66,7 @@ def main(
     argv: list[str] | None = None,
     *,
     llm: ExtractionLLM | None = None,
+    outreach_llm: OutreachLLM | None = None,
     env_file: Path | None = ENV_FILE,
 ) -> int:
     """Run one case and print its report. Exit code 2 for bad input or configuration."""
@@ -77,7 +84,7 @@ def main(
         print(f"error: {error}", file=sys.stderr)
         return 2
 
-    print(format_report(analyze_packet(order, note, llm=llm)))
+    print(format_report(analyze_packet(order, note, llm=llm, draft=True, outreach_llm=outreach_llm)))
     return 0
 
 

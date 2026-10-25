@@ -126,7 +126,11 @@ def test_wrong_result_type_from_the_model_is_refused() -> None:
         draft_request(_request(), llm=lambda prompt: {"subject": "s", "body": "b"})  # type: ignore[arg-type, return-value]
 
 
-def test_default_path_goes_through_the_sdk_and_is_blocked_in_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_default_path_goes_through_the_sdk_and_is_blocked_in_tests(
+    monkeypatch: pytest.MonkeyPatch, network_attempts: list[str]
+) -> None:
     monkeypatch.setenv("MODEL_DEV", "test-model")
     with pytest.raises(NetworkCallInTest):
         draft_request(_request())
+    assert len(network_attempts) == 1
+    network_attempts.clear()  # expected, so the autouse guard does not fail this test

@@ -33,6 +33,7 @@ from src.tools import (
     check_packet,
     escalate_to_human,
     lookup_payer_checklist,
+    build_outreach_request,
     route,
     validate_citations,
     validate_passages,
@@ -130,6 +131,8 @@ class AnalysisRun:
     raw_fields: list[ExtractedField]  # what the model returned, before validation
     tools_called: list[str]
     raw_unreadable: list[str] = field(default_factory=list)  # unreadable passages as claimed
+    draft: Draft | None = None  # the internal request, only for NOT_READY and only when asked
+    draft_error: str | None = None  # error type if the Outreach step failed
 
 
 def _review_reason(gaps: list[Gap]) -> str:
@@ -143,12 +146,18 @@ def analyze_packet(
     *,
     llm: ExtractionLLM | None = None,
     audit_path: Path | None = None,
+    draft: bool = False,
+    outreach_llm: OutreachLLM | None = None,
 ) -> AnalysisRun:
     """Run lookup, extraction, citation check and packet check in that fixed order.
 
     Code decides the status: route() on the gaps, and escalate_to_human for
     NEEDS_REVIEW. If the model call fails, the packet goes to a person. Every run
     writes exactly one audit line (case id, tools called, status, timestamp).
+
+    With draft=True, a NOT_READY packet also gets an internal request drafted by the
+    Outreach agent from the gap list alone. NEEDS_REVIEW and READY packets never do. If
+    the Outreach step fails the analysis stands and only the draft is missing.
     """
     tools_called = ["lookup_payer_checklist"]
     checklist = lookup_payer_checklist(order.payer_id)
@@ -191,12 +200,24 @@ def analyze_packet(
     if reasons:
         report = escalate_to_human(report, "; ".join(reasons))
         tools_called.append("escalate_to_human")
+
+    drafted, draft_error = None, None
+    if draft and report.status == "NOT_READY":
+        try:
+            drafted = draft_request(build_outreach_request(report), llm=outreach_llm)
+            tools_called.append("draft_request")
+        except Exception as error:  # the analysis stands; only the draft is missing
+            draft_error = type(error).__name__
+            tools_called.append("draft_request_failed")
+
     _audit(order, tools_called, report, audit_path)
     return AnalysisRun(
         report=report,
         raw_fields=raw_fields,
         tools_called=tools_called,
         raw_unreadable=list(extraction.unreadable_passages),
+        draft=drafted,
+        draft_error=draft_error,
     )
 
 

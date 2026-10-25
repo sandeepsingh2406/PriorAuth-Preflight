@@ -60,7 +60,7 @@ Out of scope (do not build, even if easy):
    An order and checklist for different payers raise `ValueError`. Gap detail text never repeats quoted note text.
 6. Route:
    - No gaps: status `READY`.
-   - Gaps: status `NOT_READY`; hand off the gap list (an `OutreachRequest`, built from the report by plain code) to the Outreach agent to draft a request.
+   - Gaps: status `NOT_READY`; hand off the gap list (an `OutreachRequest`, built from the report by plain code) to the Outreach agent to draft a request. Only `NOT_READY` packets get a draft: `READY` needs nothing requested, and `NEEDS_REVIEW` goes to a person first because conflicting or unreadable evidence has to be read before anyone is asked for anything. Drafting is opt-in (`draft=True`; the evaluation and gate never turn it on). If the Outreach step fails, the analysis stands and only the draft is missing; the audit line shows `draft_request_failed`.
    - Conflicting or unreadable evidence: status `NEEDS_REVIEW` with a reason. Any verified unreadable passage forces `NEEDS_REVIEW`, even when there are also missing items (the gaps stay listed). The reason is written by code and contains no quoted note text; the passages themselves are shown to the reviewer.
 7. A human approves, edits, or discards the draft. The decision is written to the audit log.
 
@@ -71,7 +71,7 @@ Build the single-agent version first. Split only if the single-agent version wor
 | Component | Kind | Responsibility |
 | --- | --- | --- |
 | Packet Analyst | Agent + code pipeline | `analyze_packet` (plain code) runs steps 2 to 5 in fixed order, routes with `route`, escalates with `escalate_to_human`, writes one audit line, and returns a `GapReport`. The SDK agent itself has no tools and no handoffs; it is used only inside `extract_fields`. If the model call fails, the packet goes to `NEEDS_REVIEW` with the error type as the reason |
-| Outreach | Agent | Receives only an `OutreachRequest` (the gap list, no `fields`), never the note or quotes from it; drafts the internal request to the ordering provider's care team |
+| Outreach | Agent | `draft_request` gives it only an `OutreachRequest` (the gap list, no `fields`), never the note or quotes from it, and refuses any other input or any status but `NOT_READY`. It has no tools and no handoffs and writes only a subject and body (`DraftText`); code adds the requested items from the gaps. The draft is never sent |
 | `lookup_payer_checklist` | Code | Reads `data/checklists.yaml` |
 | `extract_fields` | LLM, structured output | Reads the note, returns an `ExtractionResult` (one field per required item, with quotes). Prompts live in `src/prompts.py`. Model from `MODEL_DEV`, or `MODEL_DEMO` when `USE_DEMO_MODEL=true` |
 | `validate_citations` | Code | Verbatim quote check |

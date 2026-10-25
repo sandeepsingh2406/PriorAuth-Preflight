@@ -78,7 +78,7 @@ def main() -> int:
     results, runs = [], {}
     for case_id in HAND_CASES:
         order, note = load_case(case_id)
-        run = analyze_packet(order, note)
+        run = analyze_packet(order, note, draft=False)
         runs[case_id] = (note, run)
         results.append(evaluate_case(case_id, labels[case_id], note, run))
         print(f"\n################ {case_id}")
