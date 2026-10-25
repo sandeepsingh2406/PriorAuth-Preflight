@@ -51,10 +51,16 @@ Out of scope (do not build, even if easy):
 2. `lookup_payer_checklist(payer_id)` returns the required items for that payer.
 3. `extract_fields(note, checklist)` returns each required field with a value and the exact quoted span from the note, or `found = false`.
 4. `validate_citations(note, fields)` drops any field whose quote is not found verbatim in the note and marks it `found = false`. Matching is exact (no case or whitespace changes), and an empty or blank quote never counts. A failed field also loses its `value`, `quote` and `date`. A field is never upgraded to found. `conflicting_quotes` are filtered the same way, so only verbatim ones remain.
-5. `check_packet(fields, checklist, order)` compares to the checklist (including recency windows) and returns the gaps.
+5. `check_packet(fields, checklist, order)` compares to the checklist (including recency windows) and returns the gaps: at most one per checklist item, in checklist order. First matching rule wins:
+   - more than one entry for an item: `conflicting`
+   - no entry, `found = false`, or a blank quote: `missing`
+   - any surviving `conflicting_quotes` (checked before `missing`, so real contradicting evidence is never reported as just missing): `conflicting`
+   - the `lab` item: no date, or a date after the order date: `conflicting`; older than the payer's window: `stale`. Stale means strictly more than the window, so a lab exactly `lab_window_days` old is accepted.
+   - `treatment_plan`: the verified quote must contain the order's drug name (ignoring case and spacing) and its dose as a whole number (so 200 mg is not satisfied by 1200 mg), otherwise `conflicting`. The schedule is not compared.
+   An order and checklist for different payers raise `ValueError`. Gap detail text never repeats quoted note text.
 6. Route:
    - No gaps: status `READY`.
-   - Gaps: status `NOT_READY`; hand off the gap report to the Outreach agent to draft a request.
+   - Gaps: status `NOT_READY`; hand off the gap list (an `OutreachRequest`, built from the report by plain code) to the Outreach agent to draft a request.
    - Conflicting or unreadable evidence: status `NEEDS_REVIEW` with a reason.
 7. A human approves, edits, or discards the draft. The decision is written to the audit log.
 
@@ -65,7 +71,7 @@ Build the single-agent version first. Split only if the single-agent version wor
 | Component | Kind | Responsibility |
 | --- | --- | --- |
 | Packet Analyst | Agent | Runs steps 2 to 5, decides the route, produces a `GapReport` |
-| Outreach | Agent | Receives only the `GapReport`, never the note; drafts the internal request to the ordering provider's care team |
+| Outreach | Agent | Receives only an `OutreachRequest` (the gap list, no `fields`), never the note or quotes from it; drafts the internal request to the ordering provider's care team |
 | `lookup_payer_checklist` | Code | Reads `data/checklists.yaml` |
 | `extract_fields` | LLM, structured output | Reads the note, returns fields with quotes |
 | `validate_citations` | Code | Verbatim quote check |
@@ -77,12 +83,15 @@ Rule: the model reads and drafts; code decides and verifies.
 
 Why a handoff: least privilege. The Outreach agent sees only the list of missing items, not the clinical note. A test must prove the note text never reaches it.
 
+`GapReport.fields` carries quotes, which are verbatim excerpts of the note, so the Outreach agent is not given the `GapReport`. Plain code builds an `OutreachRequest` from it (case id, payer id, status, gaps, escalation reason; no `fields`), and that type is the Outreach agent's only input. The person reviewing in the UI still sees the full report with quotes. The test builds a report from a note with distinctive text and asserts that neither the quotes nor any long run of characters from the note appear in what Outreach receives. `check_packet` already keeps quoted note text out of each gap's `detail`.
+
 ## 6. Data models (Pydantic, in `src/models.py`)
 
 - `ExtractedField`: `name`, `value: str | None`, `quote: str | None`, `found: bool`, `date: date | None` (the lab date, used for recency), `conflicting_quotes: list[str]` (other quotes that contradict `quote`; each is validated verbatim like `quote`, and any that survive make the item `conflicting`)
 - `Gap`: `item`, `reason` (`missing` | `stale` | `conflicting`), `detail`
 - `GapReport`: `case_id`, `payer_id`, `status` (`READY` | `NOT_READY` | `NEEDS_REVIEW`), `fields`, `gaps`, `escalation_reason: str | None`
 - `Draft`: `subject`, `body`, `requested_items`
+- `OutreachRequest` (not built yet; added with the Outreach agent): `case_id`, `payer_id`, `status`, `gaps`, `escalation_reason`. The Outreach agent's only input. It has no `fields`, so no quotes from the note.
 
 Supporting models (also in `src/models.py`):
 
@@ -107,7 +116,7 @@ Supporting models (also in `src/models.py`):
 - No tool exists that submits, emails, or sends anything.
 - Every reported gap or evidence item must carry a validated citation, or be marked not found.
 - The agent abstains and escalates when evidence conflicts or the note is unreadable.
-- The Outreach agent receives the gap report only.
+- The Outreach agent receives the gap list only (an `OutreachRequest`), never the note and never quotes from it.
 - Every run is appended to `audit/runs.jsonl`: timestamp, case id, tools called, status, human decision.
 - Secrets live in `.env` (git-ignored). Never in code, logs, or commits.
 
