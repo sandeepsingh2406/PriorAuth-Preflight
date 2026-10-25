@@ -164,3 +164,59 @@ def test_default_audit_path_follows_the_environment(tmp_path: Path, monkeypatch:
     monkeypatch.setenv("AUDIT_LOG_PATH", str(log))
     analyze_packet(ORDER, NOTE, llm=_llm(_complete()))
     assert len(_audit(log)) == 1
+
+
+# --- unreadable text -----------------------------------------------------------
+
+BAD = "EG?R ex@n 1# d%l%tion [unreadable]"
+NOTE_WITH_BAD = NOTE + BAD + "\n"
+
+
+def _llm_u(fields: list[ExtractedField], passages: list[str]):
+    return lambda prompt: ExtractionResult(fields=fields, unreadable_passages=passages)
+
+
+def _run_u(fields, passages, log: Path, note: str = NOTE_WITH_BAD) -> AnalysisRun:
+    return analyze_packet(ORDER, note, llm=_llm_u(fields, passages), audit_path=log)
+
+
+def test_verified_unreadable_text_sends_an_otherwise_ready_packet_to_review(tmp_path: Path) -> None:
+    run = _run_u(_complete(), [BAD], tmp_path / "log.jsonl")
+    assert run.report.status == "NEEDS_REVIEW"
+    assert run.report.gaps == []
+    assert run.report.unreadable_passages == [BAD]
+    assert run.tools_called == PIPELINE + ["escalate_to_human"]
+    assert "unreadable" in run.report.escalation_reason.lower()
+    assert BAD not in run.report.escalation_reason  # the reason never repeats note text
+
+
+def test_unreadable_text_overrides_not_ready(tmp_path: Path) -> None:
+    """The garbled section hides the biomarker: the gap stays listed, but a person must look."""
+    fields = _replace(_complete(), _f("biomarker", None))
+    run = _run_u(fields, [BAD], tmp_path / "log.jsonl")
+    assert run.report.status == "NEEDS_REVIEW"
+    assert [(g.item, g.reason) for g in run.report.gaps] == [("biomarker", "missing")]
+
+
+def test_a_reported_passage_that_is_not_in_the_note_is_ignored(tmp_path: Path) -> None:
+    """The model cannot send a packet to review with text it made up."""
+    run = _run_u(_complete(), ["totally invented gibberish"], tmp_path / "log.jsonl")
+    assert run.report.status == "READY"
+    assert run.report.unreadable_passages == []
+    assert run.raw_unreadable == ["totally invented gibberish"]  # kept so the evaluation can count it
+
+
+def test_unreadable_text_and_a_conflict_give_one_combined_reason(tmp_path: Path) -> None:
+    stage = _f("stage", "Staging: Stage IIIB (cT3 N2 M0).", conflicting_quotes=["stage IV disease"])
+    run = _run_u(_replace(_complete(), stage), [BAD], tmp_path / "log.jsonl")
+    assert run.report.status == "NEEDS_REVIEW"
+    reason = run.report.escalation_reason.lower()
+    assert "stage" in reason and "unreadable" in reason
+    assert run.tools_called.count("escalate_to_human") == 1
+
+
+def test_audit_log_never_contains_the_unreadable_text(tmp_path: Path) -> None:
+    log = tmp_path / "log.jsonl"
+    _run_u(_complete(), [BAD], log)
+    assert "EG?R" not in log.read_text()
+    assert _audit(log)[0]["status"] == "NEEDS_REVIEW"

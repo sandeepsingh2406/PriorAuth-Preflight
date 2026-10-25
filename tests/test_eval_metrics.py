@@ -241,3 +241,18 @@ def test_measures_dataclass_serialises_to_plain_numbers() -> None:
     m = compute_measures([_r("gen_001", hits={STAGE})])
     assert isinstance(m, Measures)
     assert m.cases == 1
+
+
+def test_unreadable_passages_count_as_quotes_in_the_evaluation() -> None:
+    """The model's reported passages are checked like quotes: raw claims and final report."""
+    label = {"expected_status": "NEEDS_REVIEW", "expected_gaps": [], "ambiguous": True}
+    bad = "EG?R ex@n [unreadable]"
+    note = NOTE + bad + "\n"
+    report = GapReport(
+        case_id="gen_005", payer_id="payer_a", status="NEEDS_REVIEW", fields=[], gaps=[], unreadable_passages=[bad]
+    )
+    run = AnalysisRun(report=report, raw_fields=[], tools_called=[], raw_unreadable=[bad, "invented passage"])
+    result = evaluate_case("gen_005", label, note, run)
+    assert result.raw_quotes_total == 2
+    assert result.raw_quote_failures == ["unreadable: 'invented passage'"]
+    assert result.final_quotes_total == 1 and result.final_quotes_invalid == 0

@@ -20,8 +20,8 @@ NOTE = (
 class FakeLLM:
     """Stands in for the model: records each prompt and returns a prepared result."""
 
-    def __init__(self, fields: list[ExtractedField]) -> None:
-        self.result = ExtractionResult(fields=fields)
+    def __init__(self, fields: list[ExtractedField], unreadable: list[str] | None = None) -> None:
+        self.result = ExtractionResult(fields=fields, unreadable_passages=unreadable or [])
         self.prompts: list[str] = []
 
     def __call__(self, prompt: str) -> ExtractionResult:
@@ -36,7 +36,7 @@ def _field(name: str, quote: str | None, **kw: object) -> ExtractedField:
 def test_found_field_comes_back_with_its_quote() -> None:
     """A field the model found is returned with its quote, value and lab date intact."""
     llm = FakeLLM([_field("recent_lab", "CBC drawn 2026-04-22.", date=datetime.date(2026, 4, 22))])
-    (field,) = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm)
+    (field,) = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm).fields
     assert isinstance(field, ExtractedField)
     assert field.found is True
     assert field.quote == "CBC drawn 2026-04-22."
@@ -46,7 +46,7 @@ def test_found_field_comes_back_with_its_quote() -> None:
 def test_missing_field_comes_back_not_found() -> None:
     """When the model reports an item as absent, it stays found=False with no quote."""
     llm = FakeLLM([_field("biomarker", None)])
-    (field,) = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm)
+    (field,) = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm).fields
     assert field.found is False
     assert field.quote is None and field.value is None
 
@@ -56,7 +56,7 @@ def test_conflicting_values_are_passed_through_not_resolved() -> None:
     llm = FakeLLM(
         [_field("stage", "Stage II (cT2 N0 M0).", conflicting_quotes=["stage IV disease"])]
     )
-    (field,) = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm)
+    (field,) = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm).fields
     assert field.quote == "Stage II (cT2 N0 M0)."
     assert field.conflicting_quotes == ["stage IV disease"]
 
@@ -64,7 +64,7 @@ def test_conflicting_values_are_passed_through_not_resolved() -> None:
 def test_order_of_fields_is_kept() -> None:
     llm = FakeLLM([_field("stage", "Stage II (cT2 N0 M0)."), _field("biomarker", None)])
     result = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm)
-    assert [f.name for f in result] == ["stage", "biomarker"]
+    assert [f.name for f in result.fields] == ["stage", "biomarker"]
 
 
 def test_prompt_lists_the_payer_items_and_carries_the_note() -> None:
@@ -134,3 +134,17 @@ def test_missing_model_name_is_a_clear_error(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.delenv("USE_DEMO_MODEL", raising=False)
     with pytest.raises(RuntimeError, match="MODEL_DEV"):
         model_name()
+
+
+def test_unreadable_passages_are_passed_through() -> None:
+    """Text the model could not read comes back for the code to validate."""
+    llm = FakeLLM([_field("biomarker", None)], unreadable=["EG?R ex@n 1# [unreadable]"])
+    result = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm)
+    assert result.unreadable_passages == ["EG?R ex@n 1# [unreadable]"]
+
+
+def test_extract_fields_returns_an_extraction_result() -> None:
+    llm = FakeLLM([_field("stage", "Stage II (cT2 N0 M0).")])
+    result = extract_fields(NOTE, lookup_payer_checklist("payer_a"), llm=llm)
+    assert isinstance(result, ExtractionResult)
+    assert result.unreadable_passages == []

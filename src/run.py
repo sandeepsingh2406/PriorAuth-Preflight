@@ -50,6 +50,7 @@ def format_report(run: AnalysisRun) -> str:
                 lines += [f'      evidence: "{q}"' for q in quotes]
             else:
                 lines.append("      evidence: no evidence found in the note")
+    lines += [f'Unreadable text: "{passage}"' for passage in report.unreadable_passages]
     if report.escalation_reason:
         lines.append(f"Escalation reason: {report.escalation_reason}")
     return "\n".join(lines)

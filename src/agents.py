@@ -5,7 +5,7 @@ Plain code in src/tools.py checks the quotes and makes every decision.
 import datetime
 import os
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from agents import Agent, Runner
@@ -30,6 +30,7 @@ from src.tools import (
     lookup_payer_checklist,
     route,
     validate_citations,
+    validate_passages,
     write_audit_log,
 )
 
@@ -64,18 +65,18 @@ def _call_model(prompt: str) -> ExtractionResult:
 
 def extract_fields(
     note: str, checklist: PayerChecklist, *, llm: ExtractionLLM | None = None
-) -> list[ExtractedField]:
+) -> ExtractionResult:
     """Ask the model for each of the payer's required items, with verbatim quotes.
 
-    Returns the model's fields as they are. Nothing here is trusted yet:
-    validate_citations and check_packet run next.
+    Returns the model's result as it is. Nothing here is trusted yet:
+    validate_citations, validate_passages and check_packet run next.
     """
     items = "\n".join(f"- {item.name}: {item.description}" for item in checklist.items)
     prompt = EXTRACT_FIELDS_INPUT.format(items=items, note=note)
     result = (llm or _call_model)(prompt)
     if not isinstance(result, ExtractionResult):
         raise TypeError(f"Expected ExtractionResult from the model, got {type(result).__name__}")
-    return list(result.fields)
+    return result
 
 
 @dataclass
@@ -85,6 +86,7 @@ class AnalysisRun:
     report: GapReport
     raw_fields: list[ExtractedField]  # what the model returned, before validation
     tools_called: list[str]
+    raw_unreadable: list[str] = field(default_factory=list)  # unreadable passages as claimed
 
 
 def _review_reason(gaps: list[Gap]) -> str:
@@ -110,7 +112,7 @@ def analyze_packet(
 
     tools_called.append("extract_fields")
     try:
-        raw_fields = extract_fields(note, checklist, llm=llm)
+        extraction = extract_fields(note, checklist, llm=llm)
     except Exception as error:  # any model or parsing failure: fail toward a person
         report = GapReport(
             case_id=order.case_id, payer_id=order.payer_id, status="NOT_READY", fields=[], gaps=[]
@@ -122,23 +124,37 @@ def analyze_packet(
         _audit(order, tools_called, report, audit_path)
         return AnalysisRun(report=report, raw_fields=[], tools_called=tools_called)
 
+    raw_fields = extraction.fields
     tools_called.append("validate_citations")
     fields = validate_citations(note, raw_fields)
+    unreadable = validate_passages(note, extraction.unreadable_passages)
     tools_called.append("check_packet")
     gaps = check_packet(fields, checklist, order)
 
+    status = route(gaps)
+    reasons = []
+    if status == "NEEDS_REVIEW":
+        reasons.append(_review_reason(gaps))
+    if unreadable:
+        reasons.append(f"Unreadable text in the note ({len(unreadable)} passage(s)); review it by hand.")
     report = GapReport(
         case_id=order.case_id,
         payer_id=order.payer_id,
-        status=route(gaps),
+        status=status,
         fields=fields,
         gaps=gaps,
+        unreadable_passages=unreadable,
     )
-    if report.status == "NEEDS_REVIEW":
-        report = escalate_to_human(report, _review_reason(gaps))
+    if reasons:
+        report = escalate_to_human(report, "; ".join(reasons))
         tools_called.append("escalate_to_human")
     _audit(order, tools_called, report, audit_path)
-    return AnalysisRun(report=report, raw_fields=raw_fields, tools_called=tools_called)
+    return AnalysisRun(
+        report=report,
+        raw_fields=raw_fields,
+        tools_called=tools_called,
+        raw_unreadable=list(extraction.unreadable_passages),
+    )
 
 
 def _audit(order: Order, tools_called: list[str], report: GapReport, path: Path | None) -> None:

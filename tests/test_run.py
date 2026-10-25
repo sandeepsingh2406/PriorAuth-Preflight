@@ -132,3 +132,27 @@ def test_main_with_a_bad_case_id_exits_2(capsys: pytest.CaptureFixture[str]) -> 
     code = main(["--case", "../hand_01"], llm=_llm(), env_file=None)
     assert code == 2
     assert "case" in capsys.readouterr().err.lower()
+
+
+def test_report_shows_unreadable_passages_for_the_reviewer() -> None:
+    """A person has to read the garbled text themselves, so the report prints it."""
+    bad = "EG?R ex@n 1# [unreadable]"
+    note = NOTE + bad + "\n"
+    run = analyze_packet(
+        ORDER,
+        note,
+        llm=lambda prompt: ExtractionResult(
+            fields=[
+                _f("diagnosis", "SYNTHETIC NOTE"),
+                _f("stage", "Staging: Stage II (cT2 N0 M0)."),
+                _f("biomarker", None),
+                _f("recent_lab", "Labs: CBC drawn 2026-04-22.", date=datetime.date(2026, 4, 22)),
+                _f("treatment_plan", "Plan: Start Examplumab 200 mg IV every 21 days."),
+            ],
+            unreadable_passages=[bad],
+        ),
+    )
+    text = format_report(run)
+    assert "NEEDS_REVIEW" in text
+    assert f'Unreadable text: "{bad}"' in text
+    assert "Escalation reason:" in text

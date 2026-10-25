@@ -72,6 +72,19 @@ def validate_citations(note: str, fields: list[ExtractedField]) -> list[Extracte
     return results
 
 
+def validate_passages(note: str, passages: list[str]) -> list[str]:
+    """Keep only reported unreadable passages that appear verbatim in the note.
+
+    Same rule as validate_citations: exact match, blanks refused. Duplicates are
+    removed and order is kept. Text the model made up cannot send a packet to review.
+    """
+    kept: list[str] = []
+    for passage in passages:
+        if _is_verbatim(note, passage) and passage not in kept:
+            kept.append(passage)
+    return kept
+
+
 def _plan_conflict(quote: str, order: Order) -> str | None:
     """Why the quoted plan disagrees with the order, or None if drug and dose both appear.
 

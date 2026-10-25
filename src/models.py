@@ -19,9 +19,14 @@ class ExtractedField(BaseModel):
 
 
 class ExtractionResult(BaseModel):
-    """What the Packet Analyst returns: one ExtractedField per requested item."""
+    """What the Packet Analyst returns: one ExtractedField per requested item.
+
+    unreadable_passages are stretches of the note the model could not read, copied
+    verbatim. Code checks them against the note before they affect anything.
+    """
 
     fields: list[ExtractedField]
+    unreadable_passages: list[str] = Field(default_factory=list)
 
 
 class Gap(BaseModel):
@@ -41,6 +46,7 @@ class GapReport(BaseModel):
     fields: list[ExtractedField]
     gaps: list[Gap]
     escalation_reason: str | None = None
+    unreadable_passages: list[str] = Field(default_factory=list)  # verified verbatim in the note
 
 
 class Draft(BaseModel):

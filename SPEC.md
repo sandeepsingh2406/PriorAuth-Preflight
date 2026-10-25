@@ -49,8 +49,8 @@ Out of scope (do not build, even if easy):
 
 1. Input: order (JSON), clinical note (text), payer id.
 2. `lookup_payer_checklist(payer_id)` returns the required items for that payer.
-3. `extract_fields(note, checklist)` returns each required field with a value and the exact quoted span from the note, or `found = false`.
-4. `validate_citations(note, fields)` drops any field whose quote is not found verbatim in the note and marks it `found = false`. Matching is exact (no case or whitespace changes), and an empty or blank quote never counts. A failed field also loses its `value`, `quote` and `date`. A field is never upgraded to found. `conflicting_quotes` are filtered the same way, so only verbatim ones remain.
+3. `extract_fields(note, checklist)` returns each required field with a value and the exact quoted span from the note, or `found = false`, plus any stretches of the note it could not read (`unreadable_passages`, copied verbatim).
+4. `validate_citations(note, fields)` drops any field whose quote is not found verbatim in the note and marks it `found = false`. Matching is exact (no case or whitespace changes), and an empty or blank quote never counts. A failed field also loses its `value`, `quote` and `date`. A field is never upgraded to found. `conflicting_quotes` are filtered the same way, so only verbatim ones remain. Reported unreadable passages are checked the same way (`validate_passages`): text the model made up is dropped.
 5. `check_packet(fields, checklist, order)` compares to the checklist (including recency windows) and returns the gaps: at most one per checklist item, in checklist order. First matching rule wins:
    - more than one entry for an item: `conflicting`
    - no entry, `found = false`, or a blank quote: `missing`
@@ -61,7 +61,7 @@ Out of scope (do not build, even if easy):
 6. Route:
    - No gaps: status `READY`.
    - Gaps: status `NOT_READY`; hand off the gap list (an `OutreachRequest`, built from the report by plain code) to the Outreach agent to draft a request.
-   - Conflicting or unreadable evidence: status `NEEDS_REVIEW` with a reason.
+   - Conflicting or unreadable evidence: status `NEEDS_REVIEW` with a reason. Any verified unreadable passage forces `NEEDS_REVIEW`, even when there are also missing items (the gaps stay listed). The reason is written by code and contains no quoted note text; the passages themselves are shown to the reviewer.
 7. A human approves, edits, or discards the draft. The decision is written to the audit log.
 
 ## 5. Agents and tools
@@ -89,12 +89,12 @@ Why a handoff: least privilege. The Outreach agent sees only the list of missing
 
 ## 6. Data models (Pydantic, in `src/models.py`)
 
-- `ExtractionResult`: `fields: list[ExtractedField]`. The structured output of the Packet Analyst.
+- `ExtractionResult`: `fields: list[ExtractedField]`, `unreadable_passages: list[str]`. The structured output of the Packet Analyst.
 - `ExtractedField`: `name`, `value: str | None`, `quote: str | None`, `found: bool`, `date: date | None` (the lab date, used for recency), `conflicting_quotes: list[str]` (other quotes that contradict `quote`; each is validated verbatim like `quote`, and any that survive make the item `conflicting`)
 - `Gap`: `item`, `reason` (`missing` | `stale` | `conflicting`), `detail`
-- `GapReport`: `case_id`, `payer_id`, `status` (`READY` | `NOT_READY` | `NEEDS_REVIEW`), `fields`, `gaps`, `escalation_reason: str | None`
+- `GapReport`: `case_id`, `payer_id`, `status` (`READY` | `NOT_READY` | `NEEDS_REVIEW`), `fields`, `gaps`, `escalation_reason: str | None`, `unreadable_passages: list[str]` (verified verbatim in the note)
 - `Draft`: `subject`, `body`, `requested_items`
-- `OutreachRequest` (not built yet; added with the Outreach agent): `case_id`, `payer_id`, `status`, `gaps`, `escalation_reason`. The Outreach agent's only input. It has no `fields`, so no quotes from the note.
+- `OutreachRequest` (not built yet; added with the Outreach agent): `case_id`, `payer_id`, `status`, `gaps`, `escalation_reason`. The Outreach agent's only input. It has no `fields` and no `unreadable_passages`, so no text from the note.
 
 Supporting models (also in `src/models.py`):
 

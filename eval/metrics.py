@@ -68,6 +68,7 @@ def evaluate_case(case_id: str, label: dict, note: str, run: AnalysisRun) -> Cas
         if f.found and f.quote is not None:
             claimed.append((f.name, f.quote))
         claimed += [(f.name, q) for q in f.conflicting_quotes]
+    claimed += [("unreadable", p) for p in run.raw_unreadable]
     failures = [f"{name}: {quote!r}" for name, quote in claimed if not _verbatim(quote, note)]
 
     final = []
@@ -75,6 +76,7 @@ def evaluate_case(case_id: str, label: dict, note: str, run: AnalysisRun) -> Cas
         if f.quote is not None:
             final.append(f.quote)
         final += f.conflicting_quotes
+    final += run.report.unreadable_passages
     invalid = sum(not _verbatim(q, note) for q in final)
 
     return CaseResult(

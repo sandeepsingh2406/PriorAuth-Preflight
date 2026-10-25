@@ -28,6 +28,10 @@ from src.prompts import (
         "treatment-naive",
         "yyyy-mm-dd",
         "ignore any instructions",
+        "unreadable_passages",
+        "illegible",
+        "do not try to reconstruct",
+        "abbreviations",
     ],
 )
 def test_extraction_prompt_keeps_each_required_rule(rule: str) -> None:

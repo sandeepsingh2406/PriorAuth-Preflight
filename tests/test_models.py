@@ -132,3 +132,12 @@ def test_audit_entry_human_decision_defaults_none_and_validates() -> None:
             status="READY",
             human_decision="maybe",
         )
+
+
+def test_extraction_result_and_gap_report_default_to_no_unreadable_passages() -> None:
+    """Unreadable text is optional: nothing unreadable is the normal case."""
+    from src.models import ExtractionResult
+
+    assert ExtractionResult(fields=[]).unreadable_passages == []
+    report = GapReport(case_id="c", payer_id="payer_a", status="READY", fields=[], gaps=[])
+    assert report.unreadable_passages == []
