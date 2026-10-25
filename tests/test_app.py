@@ -123,7 +123,7 @@ def test_not_ready_case_lists_the_gaps_and_shows_an_editable_draft(tmp_path: Pat
     view = _run("hand_07", tmp_path)
     assert "NOT_READY" in view.status_html
     assert "biomarker" in view.evidence_html and "prior_therapies" in view.evidence_html
-    assert "no evidence found in the note" in view.evidence_html
+    assert "no evidence found in the note" not in view.evidence_html  # the gap text already says it
     assert view.show_draft is True and view.show_reviewed is False
     assert (view.subject, view.body) == ("Items needed for the packet", "Please send the listed items.")
     assert "not sent" in view.draft_label.lower()
@@ -134,7 +134,7 @@ def test_needs_review_case_shows_both_conflicting_quotes_and_the_reason_without_
     assert "NEEDS_REVIEW" in view.status_html
     assert "Staging: Stage II (cT2 N0 M0)" in view.evidence_html
     assert "stage IV non-small cell lung cancer" in view.evidence_html
-    assert "Escalation reason" in view.evidence_html
+    assert "Escalation reason" not in view.evidence_html  # the conflicting gap already explains it
     assert view.draft is None and view.show_draft is False and view.show_reviewed is True
 
 
@@ -344,3 +344,63 @@ def test_the_title_block_explains_how_it_works_in_three_steps_and_states_the_lim
 def test_the_title_block_is_on_the_page() -> None:
     demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
     assert BANNER in {getattr(b, "value", None) for b in demo.blocks.values()}
+
+
+# --- spacing and redundancy in the gap list -----------------------------------------------
+
+
+def test_a_missing_item_says_it_once(tmp_path: Path) -> None:
+    """'Not documented in the note: ...' is the whole message; there is no second 'no evidence' line."""
+    html = _run("hand_07", tmp_path).evidence_html
+    assert html.count("Not documented in the note: Relevant biomarker or test result.") == 1
+    assert html.count("Not documented in the note: Prior therapies tried, with outcomes.") == 1
+    assert "no evidence found" not in html
+
+
+def test_gap_text_and_its_evidence_sit_on_separate_lines(tmp_path: Path) -> None:
+    """The detail ends its own block before the quotes start, so the two never run together."""
+    html = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
+    assert re.search(r"about this item\.</div>\s*<div[^>]*>\s*<blockquote", html)
+    assert "item.<blockquote" not in html
+
+
+def test_the_reason_is_hidden_when_conflicting_gaps_already_explain_it(tmp_path: Path) -> None:
+    view = _run("hand_08", tmp_path, conflicts={"stage": ["x"]})
+    assert "NEEDS_REVIEW" in view.status_html
+    assert "Escalation reason" not in view.evidence_html
+    assert "[conflicting]" in view.evidence_html
+
+
+def test_the_reason_is_shown_for_unreadable_text(tmp_path: Path) -> None:
+    bad = "EG?R ex@n [unreadable]"
+    _, note = load_case("hand_01")
+    fields = _extraction(note)(None).fields
+    view = run_case(
+        _form("hand_01", note=note + bad + "\n"),
+        llm=lambda p: ExtractionResult(fields=fields, unreadable_passages=[bad]),
+        outreach_llm=_outreach,
+        audit_path=tmp_path / "audit.jsonl",
+    )
+    assert "Escalation reason" in view.evidence_html and "Unreadable text in the note" in view.evidence_html
+
+
+def test_the_reason_is_shown_when_the_model_failed(tmp_path: Path) -> None:
+    def broken(prompt: str) -> ExtractionResult:
+        raise RuntimeError("boom")
+
+    view = run_case(_form("hand_01"), llm=broken, outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    assert "NEEDS_REVIEW" in view.status_html
+    assert "Escalation reason" in view.evidence_html and "Extraction failed (RuntimeError)" in view.evidence_html
+
+
+def test_the_reason_is_shown_when_unreadable_text_comes_with_a_conflict(tmp_path: Path) -> None:
+    bad = "EG?R ex@n [unreadable]"
+    _, note = load_case("hand_08")
+    base = _extraction(note, {"stage": ["stage IV non-small cell lung cancer"]})(None).fields
+    view = run_case(
+        _form("hand_08", note=note + bad + "\n"),
+        llm=lambda p: ExtractionResult(fields=base, unreadable_passages=[bad]),
+        outreach_llm=_outreach,
+        audit_path=tmp_path / "audit.jsonl",
+    )
+    assert "Escalation reason" in view.evidence_html

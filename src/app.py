@@ -167,7 +167,9 @@ def _quote(text: str) -> str:
 def _evidence_html(report: GapReport) -> str:
     fields = {f.name: f for f in report.fields}
     parts = []
-    if report.escalation_reason:
+    # A conflicting gap already explains itself next to its quotes; show the reason only when it adds something.
+    conflicts_explain_it = any(g.reason == "conflicting" for g in report.gaps) and not report.unreadable_passages
+    if report.escalation_reason and not conflicts_explain_it:
         parts.append(f"<p><strong>Escalation reason:</strong> {_e(report.escalation_reason)}</p>")
 
     parts.append("<h4>Gaps</h4>")
@@ -178,8 +180,11 @@ def _evidence_html(report: GapReport) -> str:
         for gap in report.gaps:
             field = fields.get(gap.item)
             quotes = ([field.quote] if field and field.quote else []) + (field.conflicting_quotes if field else [])
-            evidence = "".join(_quote(q) for q in quotes) or "<em>no evidence found in the note</em>"
-            items.append(f"<li><strong>{_e(gap.item)}</strong> [{_e(gap.reason)}]: {_e(gap.detail)}{evidence}</li>")
+            evidence = f'<div style="margin-top:4px">{"".join(_quote(q) for q in quotes)}</div>' if quotes else ""
+            items.append(
+                f'<li style="margin-bottom:10px"><strong>{_e(gap.item)}</strong> <em>[{_e(gap.reason)}]</em>'
+                f'<div style="margin-top:2px">{_e(gap.detail)}</div>{evidence}</li>'
+            )
         parts.append("<ul>" + "".join(items) + "</ul>")
 
     if report.unreadable_passages:
