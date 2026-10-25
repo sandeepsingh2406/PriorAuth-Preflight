@@ -1,0 +1,2288 @@
+{
+  "model": "gpt-6-luna",
+  "runs": [
+    {
+      "cases": [
+        {
+          "case_id": "hand_01",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_02",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_03",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_04",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_05",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_06",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_07",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "biomarker",
+              "missing"
+            ],
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_08",
+          "group": "hand",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "stage",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_09",
+          "group": "hand",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "treatment_plan",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_10",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_001",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ],
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_002",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_003",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [
+            [
+              "recent_lab",
+              "conflicting"
+            ]
+          ],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_004",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_005",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [],
+          "missed": [],
+          "extra": [
+            [
+              "biomarker",
+              "missing"
+            ]
+          ],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_006",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "stage",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_007",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_008",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_009",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_010",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_011",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_012",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_013",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [],
+          "missed": [
+            [
+              "recent_lab",
+              "conflicting"
+            ]
+          ],
+          "extra": [
+            [
+              "recent_lab",
+              "missing"
+            ]
+          ],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_014",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_015",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ],
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_016",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_017",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ],
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_018",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_019",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "treatment_plan",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 7,
+          "final_quotes_total": 7,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_020",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_021",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_022",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_023",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_024",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_025",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_026",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_027",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_028",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ],
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 3,
+          "final_quotes_total": 3,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_029",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_030",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        }
+      ],
+      "measures": {
+        "hand": {
+          "cases": 10,
+          "status_accuracy": 1.0,
+          "gap_recall": 1.0,
+          "false_alarm_rate": 0.0,
+          "escalation_correctness": 1.0,
+          "false_escalation_rate": 0.0,
+          "reported_citation_validity": 1.0,
+          "raw_citation_validity": 1.0
+        },
+        "generated": {
+          "cases": 30,
+          "status_accuracy": 0.9666666666666667,
+          "gap_recall": 1.0,
+          "false_alarm_rate": 0.0,
+          "escalation_correctness": 0.8,
+          "false_escalation_rate": 0.0,
+          "reported_citation_validity": 1.0,
+          "raw_citation_validity": 1.0
+        }
+      }
+    },
+    {
+      "cases": [
+        {
+          "case_id": "hand_01",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_02",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_03",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_04",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_05",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_06",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_07",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "biomarker",
+              "missing"
+            ],
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_08",
+          "group": "hand",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "stage",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_09",
+          "group": "hand",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "treatment_plan",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_10",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_001",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ],
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_002",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_003",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [
+            [
+              "recent_lab",
+              "conflicting"
+            ]
+          ],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_004",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_005",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [],
+          "missed": [],
+          "extra": [
+            [
+              "biomarker",
+              "missing"
+            ]
+          ],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_006",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "stage",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_007",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_008",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_009",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_010",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_011",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_012",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_013",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [],
+          "missed": [
+            [
+              "recent_lab",
+              "conflicting"
+            ]
+          ],
+          "extra": [
+            [
+              "recent_lab",
+              "missing"
+            ]
+          ],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_014",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_015",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ],
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_016",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_017",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ],
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_018",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_019",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "treatment_plan",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 7,
+          "final_quotes_total": 7,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_020",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_021",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_022",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_023",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_024",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_025",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_026",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_027",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_028",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ],
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 3,
+          "final_quotes_total": 3,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_029",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_030",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        }
+      ],
+      "measures": {
+        "hand": {
+          "cases": 10,
+          "status_accuracy": 1.0,
+          "gap_recall": 1.0,
+          "false_alarm_rate": 0.0,
+          "escalation_correctness": 1.0,
+          "false_escalation_rate": 0.0,
+          "reported_citation_validity": 1.0,
+          "raw_citation_validity": 1.0
+        },
+        "generated": {
+          "cases": 30,
+          "status_accuracy": 0.9666666666666667,
+          "gap_recall": 1.0,
+          "false_alarm_rate": 0.0,
+          "escalation_correctness": 0.8,
+          "false_escalation_rate": 0.0,
+          "reported_citation_validity": 1.0,
+          "raw_citation_validity": 1.0
+        }
+      }
+    },
+    {
+      "cases": [
+        {
+          "case_id": "hand_01",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_02",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_03",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_04",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_05",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_06",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_07",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "biomarker",
+              "missing"
+            ],
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_08",
+          "group": "hand",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "stage",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_09",
+          "group": "hand",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "treatment_plan",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "hand_10",
+          "group": "hand",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_001",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ],
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_002",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_003",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [
+            [
+              "recent_lab",
+              "conflicting"
+            ]
+          ],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_004",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_005",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [],
+          "missed": [],
+          "extra": [
+            [
+              "biomarker",
+              "missing"
+            ]
+          ],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_006",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "stage",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_007",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_008",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_009",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_010",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_011",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_012",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_013",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [],
+          "missed": [
+            [
+              "recent_lab",
+              "conflicting"
+            ]
+          ],
+          "extra": [
+            [
+              "recent_lab",
+              "missing"
+            ]
+          ],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_014",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_015",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ],
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_016",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_017",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ],
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_018",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "recent_lab",
+              "stale"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_019",
+          "group": "generated",
+          "ambiguous": true,
+          "expected_status": "NEEDS_REVIEW",
+          "actual_status": "NEEDS_REVIEW",
+          "hits": [
+            [
+              "treatment_plan",
+              "conflicting"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 7,
+          "final_quotes_total": 7,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_020",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_021",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 6,
+          "final_quotes_total": 6,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_022",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_023",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_024",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_025",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_026",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "stage",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_027",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_028",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "prior_therapies",
+              "missing"
+            ],
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 3,
+          "final_quotes_total": 3,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_029",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "READY",
+          "actual_status": "READY",
+          "hits": [],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 5,
+          "final_quotes_total": 5,
+          "final_quotes_invalid": 0
+        },
+        {
+          "case_id": "gen_030",
+          "group": "generated",
+          "ambiguous": false,
+          "expected_status": "NOT_READY",
+          "actual_status": "NOT_READY",
+          "hits": [
+            [
+              "treatment_plan",
+              "missing"
+            ]
+          ],
+          "missed": [],
+          "extra": [],
+          "raw_quote_failures": [],
+          "raw_quotes_total": 4,
+          "final_quotes_total": 4,
+          "final_quotes_invalid": 0
+        }
+      ],
+      "measures": {
+        "hand": {
+          "cases": 10,
+          "status_accuracy": 1.0,
+          "gap_recall": 1.0,
+          "false_alarm_rate": 0.0,
+          "escalation_correctness": 1.0,
+          "false_escalation_rate": 0.0,
+          "reported_citation_validity": 1.0,
+          "raw_citation_validity": 1.0
+        },
+        "generated": {
+          "cases": 30,
+          "status_accuracy": 0.9666666666666667,
+          "gap_recall": 1.0,
+          "false_alarm_rate": 0.0,
+          "escalation_correctness": 0.8,
+          "false_escalation_rate": 0.0,
+          "reported_citation_validity": 1.0,
+          "raw_citation_validity": 1.0
+        }
+      }
+    }
+  ]
+}
