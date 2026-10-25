@@ -135,6 +135,13 @@ Supporting models (also in `src/models.py`):
 
 One screen. Left: choose a case or paste a note, choose a payer, Run. Right: status badge, gap list with quoted evidence, the drafted request, and Approve, Edit, Discard buttons. A small panel shows the tool-call trace.
 
+Built in `src/app.py` (`uv run python -m src.app`):
+
+- Left: a case dropdown (hand-labeled cases first) that fills the note, payer and order fields, or leave it empty and paste a note and fill the order by hand, then Run. A chosen case keeps its id in the audit log only while the note is unchanged; otherwise the case id is `pasted_note`. Bad input (date, payer, empty or very long note, empty order fields) gives a plain message and runs nothing.
+- Right: the status badge, the gaps with their quoted evidence (both quotes for a conflict, "no evidence found in the note" for a missing item), any unreadable text, an evidence table with a quote for every item, the escalation reason if any, and a collapsible tool-call trace with the run id.
+- A `NOT_READY` packet shows an editable draft with Approve, Edit and Discard. Approve after changing the text records `edited` then `approved`; Edit records `edited` only if something changed. Every other case has no draft and shows Mark reviewed (`reviewed`). All decisions go through `record_decision` and the confirmation says nothing was sent.
+- All note text is HTML-escaped before it reaches the page. State is per browser session (`gr.State`), never a module variable. The app listens on `127.0.0.1` only, with no share link and Gradio telemetry off. Gradio runs one analysis at a time per button by default; `default_concurrency_limit=1` is set explicitly.
+
 ## 11. Known limits
 
 - Checklists are illustrative, not real payer policy.
