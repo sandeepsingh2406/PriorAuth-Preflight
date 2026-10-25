@@ -1,12 +1,25 @@
 """Code-only tools. Plain deterministic functions: no LLM calls, nothing is sent."""
+import os
 import re
 from pathlib import Path
 
 import yaml
 
-from src.models import ChecklistItem, ExtractedField, Gap, Order, PayerChecklist, Status
+from src.models import (
+    AuditEntry,
+    ChecklistItem,
+    ExtractedField,
+    Gap,
+    GapReport,
+    Order,
+    PayerChecklist,
+    Status,
+)
 
-CHECKLISTS_PATH = Path(__file__).resolve().parent.parent / "data" / "checklists.yaml"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CHECKLISTS_PATH = PROJECT_ROOT / "data" / "checklists.yaml"
+AUDIT_ENV_VAR = "AUDIT_LOG_PATH"
+DEFAULT_AUDIT_LOG = Path("audit") / "runs.jsonl"
 PLAN_ITEM = "treatment_plan"  # the one item that is also compared with the order
 
 
@@ -152,3 +165,42 @@ def route(gaps: list[Gap]) -> Status:
     if any(g.reason == "conflicting" for g in gaps):
         return "NEEDS_REVIEW"
     return "NOT_READY" if gaps else "READY"
+
+
+def audit_log_path(path: Path | None = None) -> Path:
+    """Where the audit log goes: the given path, else AUDIT_LOG_PATH, else audit/runs.jsonl.
+
+    A path passed in is used as given. A relative path from the environment or the
+    default is anchored at the project root, so it does not depend on the working folder.
+    """
+    if path is not None:
+        return path
+    chosen = Path(os.environ.get(AUDIT_ENV_VAR) or DEFAULT_AUDIT_LOG)
+    return chosen if chosen.is_absolute() else PROJECT_ROOT / chosen
+
+
+def write_audit_log(entry: AuditEntry, path: Path | None = None) -> None:
+    """Append one JSON line for a run. Only an AuditEntry is accepted, so no note text can slip in.
+
+    Write errors are raised: a missing audit line must never go unnoticed.
+    """
+    if not isinstance(entry, AuditEntry):
+        raise TypeError("write_audit_log only accepts an AuditEntry")
+    target = audit_log_path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("a", encoding="utf-8") as log:
+        log.write(entry.model_dump_json() + "\n")
+
+
+def escalate_to_human(report: GapReport, reason: str) -> GapReport:
+    """Return a copy of the report set to NEEDS_REVIEW with the reason, keeping fields and gaps.
+
+    A blank reason is refused. If the report already has a reason, the new one is
+    appended so nothing is lost. This only builds a report; it sends nothing.
+    """
+    reason = reason.strip()
+    if not reason:
+        raise ValueError("escalate_to_human needs a non-blank reason")
+    if report.escalation_reason:
+        reason = f"{report.escalation_reason}; {reason}"
+    return report.model_copy(update={"status": "NEEDS_REVIEW", "escalation_reason": reason})

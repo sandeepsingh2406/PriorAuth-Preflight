@@ -77,7 +77,7 @@ Build the single-agent version first. Split only if the single-agent version wor
 | `validate_citations` | Code | Verbatim quote check |
 | `check_packet` | Code | Deterministic comparison and recency rules |
 | `write_audit_log` | Code | Appends a JSON line per run |
-| `escalate_to_human` | Code | Sets `NEEDS_REVIEW` with a reason |
+| `escalate_to_human` | Code | Returns a copy of the report set to `NEEDS_REVIEW` with a reason (a blank reason is refused; a second reason is appended to the first). It only builds a report and sends nothing |
 
 Rule: the model reads and drafts; code decides and verifies.
 
@@ -113,11 +113,11 @@ Supporting models (also in `src/models.py`):
 
 ## 8. Safety and guardrails
 
-- No tool exists that submits, emails, or sends anything.
+- No tool exists that submits, emails, or sends anything. A test scans every module in `src/` and fails on any function named like a sending action (`send`, `submit`, `email`, `fax`, `post`, `upload`, `publish`, `notify`) or any import of a mail, socket or HTTP client module.
 - Every reported gap or evidence item must carry a validated citation, or be marked not found.
 - The agent abstains and escalates when evidence conflicts or the note is unreadable.
 - The Outreach agent receives the gap list only (an `OutreachRequest`), never the note and never quotes from it.
-- Every run is appended to `audit/runs.jsonl`: timestamp, case id, tools called, status, human decision.
+- Every run is appended to `audit/runs.jsonl`: timestamp, case id, tools called, status, human decision. The path is `AUDIT_LOG_PATH` if set, else `audit/runs.jsonl` under the project root. The writer accepts only an `AuditEntry` (which rejects extra keys), so note text cannot be logged. It appends one JSON line per run and raises on a write error rather than skipping the line.
 - Secrets live in `.env` (git-ignored). Never in code, logs, or commits.
 
 ## 9. Evaluation (`eval/run_eval.py`)
