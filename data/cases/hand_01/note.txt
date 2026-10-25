@@ -1,0 +1,16 @@
+SYNTHETIC NOTE
+Record number: SYN-90001
+Visit date: 2026-05-01
+Oncology follow-up (fictional patient, 62-year-old)
+
+Diagnosis: Non-small cell lung cancer, adenocarcinoma (ICD-10 C34.90). Biopsy-confirmed 2026-01-20.
+
+Staging: Stage IIIB (cT3 N2 M0) based on PET/CT and brain MRI completed in February 2026.
+
+Biomarkers: EGFR exon 19 deletion detected (reported 2026-02-03). ALK negative.
+
+Prior therapy: Concurrent chemoradiation (carboplatin and paclitaxel with thoracic radiation), 2026-02-16 to 2026-03-27. Restaging in April showed stable disease.
+
+Labs: CBC and metabolic panel drawn 2026-04-22. WBC 6.1, hemoglobin 12.4, platelets 214, creatinine 0.9.
+
+Plan: Start Examplumab 200 mg IV every 21 days. Reassess with imaging after 3 cycles.

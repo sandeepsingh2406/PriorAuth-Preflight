@@ -1,0 +1,16 @@
+SYNTHETIC NOTE
+Record number: SYN-90003
+Visit date: 2026-05-29
+Oncology consult (fictional patient, 67-year-old)
+
+Diagnosis: Recurrent invasive ductal carcinoma of the right breast (ICD-10 C50.911). Recurrence biopsy-confirmed 2026-05-08.
+
+Disease extent: Restaging CT and bone scan are scheduled for next week and have not been done. Extent of recurrent disease is not yet known.
+
+Biomarkers (recurrence biopsy): ER positive, PR positive, HER2 low (IHC 1+).
+
+Prior therapy: Lumpectomy and radiation in 2021, then anastrozole from 2021 to 2025.
+
+Labs: CBC and metabolic panel 2026-05-26. WBC 5.8, hemoglobin 12.9, platelets 231, creatinine 0.8.
+
+Plan: Pending restaging, plan to start Examplumab 300 mg IV every 21 days.

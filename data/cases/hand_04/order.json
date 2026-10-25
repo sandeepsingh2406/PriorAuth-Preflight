@@ -1,0 +1,8 @@
+{
+  "case_id": "hand_04",
+  "payer_id": "payer_a",
+  "order_date": "2026-05-11",
+  "drug": "Testrizumab",
+  "dose": "100 mg",
+  "schedule": "weekly for 4 doses, then every 28 days"
+}

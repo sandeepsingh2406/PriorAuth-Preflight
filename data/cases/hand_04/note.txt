@@ -1,0 +1,16 @@
+SYNTHETIC NOTE
+Record number: SYN-90004
+Visit date: 2026-05-08
+Lymphoma clinic (fictional patient, 54-year-old)
+
+Diagnosis: Diffuse large B-cell lymphoma (ICD-10 C83.30), relapsed. Relapse confirmed by biopsy 2026-03-12.
+
+Staging: Ann Arbor stage III on PET/CT 2026-03-20.
+
+Biomarkers: CD20 positive. MYC and BCL2 rearrangements not detected.
+
+Prior therapy: R-CHOP x6 cycles, completed 2025-11-04, with complete response at that time.
+
+Labs: CBC and LDH drawn 2026-04-10. WBC 4.4, hemoglobin 11.2, platelets 166, LDH 280.
+
+Plan: Start Testrizumab 100 mg weekly for 4 doses, then every 28 days.

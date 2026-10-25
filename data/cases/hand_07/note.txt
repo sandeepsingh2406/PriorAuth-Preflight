@@ -1,0 +1,12 @@
+SYNTHETIC NOTE
+Record number: SYN-90007
+Visit date: 2026-06-18
+Medical oncology (fictional patient, 71-year-old)
+
+Diagnosis: Gastric adenocarcinoma (ICD-10 C16.9), biopsy-confirmed 2026-05-14.
+
+Stage: Stage IV, with liver metastases on CT 2026-05-28.
+
+Labs: CBC and metabolic panel 2026-06-10. WBC 6.6, hemoglobin 10.9, platelets 199, creatinine 1.0.
+
+Plan: Start Examplumab 200 mg IV every 21 days. Patient and family agree with the plan.

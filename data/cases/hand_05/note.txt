@@ -1,0 +1,16 @@
+SYNTHETIC NOTE
+Record number: SYN-90005
+Visit date: 2026-05-22
+Gynecologic oncology (fictional patient, 59-year-old)
+
+Diagnosis: High-grade serous ovarian carcinoma (ICD-10 C56.9).
+
+Stage: FIGO stage IIIC.
+
+Biomarkers: BRCA1 pathogenic variant (germline testing reported 2024-08-15).
+
+Prior therapy: Carboplatin and paclitaxel x6 cycles, completed 2025-12-14. Debulking surgery 2024-09.
+
+Labs: CBC drawn 2026-04-10. WBC 5.0, hemoglobin 11.5, platelets 240.
+
+Plan: Start Examplumab 300 mg IV every 21 days.

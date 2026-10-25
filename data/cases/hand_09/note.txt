@@ -1,0 +1,16 @@
+SYNTHETIC NOTE
+Record number: SYN-90009
+Visit date: 2026-07-09
+Oncology visit (fictional patient, 73-year-old)
+
+Diagnosis: Urothelial carcinoma of the bladder (ICD-10 C67.9), biopsy-confirmed 2026-04-15.
+
+Stage: Stage IV, with nodal and lung metastases on CT 2026-05-12.
+
+Biomarkers: FGFR3 alteration detected (reported 2026-04-30).
+
+Prior therapy: Gemcitabine and carboplatin x2 cycles, 2026-05-20 to 2026-06-30.
+
+Labs: CBC and metabolic panel 2026-07-02. WBC 5.4, hemoglobin 11.9, platelets 205, creatinine 1.2.
+
+Plan: Start Samplimab 400 mg IV every 28 days.

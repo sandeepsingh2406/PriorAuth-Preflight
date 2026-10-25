@@ -1,0 +1,18 @@
+SYNTHETIC NOTE
+Record number: SYN-90008
+Visit date: 2026-07-02
+Oncology follow-up (fictional patient, 66-year-old)
+
+Diagnosis: Non-small cell lung cancer, squamous cell type (ICD-10 C34.90), biopsy-confirmed 2026-02-10.
+
+Staging: Stage II (cT2 N0 M0) per PET/CT 2026-02-05.
+
+Assessment: 66-year-old with stage IV non-small cell lung cancer, here to start immunotherapy.
+
+Biomarkers: PD-L1 expression 60 percent. EGFR and ALK negative.
+
+Prior therapy: Carboplatin and pemetrexed x4 cycles, 2026-03-01 to 2026-05-10.
+
+Labs: CBC and metabolic panel 2026-06-25. WBC 6.9, hemoglobin 12.2, platelets 252, creatinine 1.1.
+
+Plan: Start Examplumab 200 mg IV every 21 days.

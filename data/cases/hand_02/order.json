@@ -1,0 +1,8 @@
+{
+  "case_id": "hand_02",
+  "payer_id": "payer_b",
+  "order_date": "2026-05-18",
+  "drug": "Samplimab",
+  "dose": "400 mg",
+  "schedule": "every 28 days"
+}

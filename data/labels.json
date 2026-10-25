@@ -1,7 +1,7 @@
 {
   "gen_001": {
-    "payer_id": "payer_b",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "stage",
@@ -12,167 +12,167 @@
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_002": {
-    "payer_id": "payer_a",
-    "expected_status": "READY",
-    "expected_gaps": [],
-    "ambiguous": false,
     "ambiguity_kind": null,
-    "hand_labeled": false
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_003": {
-    "payer_id": "payer_c",
-    "expected_status": "NEEDS_REVIEW",
+    "ambiguity_kind": "conflicting_lab",
+    "ambiguous": true,
     "expected_gaps": [
       {
         "item": "recent_lab",
         "reason": "conflicting"
       }
     ],
-    "ambiguous": true,
-    "ambiguity_kind": "conflicting_lab",
-    "hand_labeled": false
+    "expected_status": "NEEDS_REVIEW",
+    "hand_labeled": false,
+    "payer_id": "payer_c"
   },
   "gen_004": {
-    "payer_id": "payer_a",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "recent_lab",
         "reason": "stale"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_005": {
-    "payer_id": "payer_a",
-    "expected_status": "NEEDS_REVIEW",
-    "expected_gaps": [],
-    "ambiguous": true,
     "ambiguity_kind": "unreadable_biomarker",
-    "hand_labeled": false
+    "ambiguous": true,
+    "expected_gaps": [],
+    "expected_status": "NEEDS_REVIEW",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_006": {
-    "payer_id": "payer_a",
-    "expected_status": "NEEDS_REVIEW",
+    "ambiguity_kind": "conflicting_stage",
+    "ambiguous": true,
     "expected_gaps": [
       {
         "item": "stage",
         "reason": "conflicting"
       }
     ],
-    "ambiguous": true,
-    "ambiguity_kind": "conflicting_stage",
-    "hand_labeled": false
+    "expected_status": "NEEDS_REVIEW",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_007": {
-    "payer_id": "payer_c",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "prior_therapies",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_c"
   },
   "gen_008": {
-    "payer_id": "payer_b",
-    "expected_status": "READY",
-    "expected_gaps": [],
-    "ambiguous": false,
     "ambiguity_kind": null,
-    "hand_labeled": false
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_009": {
-    "payer_id": "payer_b",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "treatment_plan",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_010": {
-    "payer_id": "payer_b",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "prior_therapies",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_011": {
-    "payer_id": "payer_b",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "stage",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_012": {
-    "payer_id": "payer_c",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "recent_lab",
         "reason": "stale"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_c"
   },
   "gen_013": {
-    "payer_id": "payer_b",
-    "expected_status": "NEEDS_REVIEW",
+    "ambiguity_kind": "unreadable_lab_date",
+    "ambiguous": true,
     "expected_gaps": [
       {
         "item": "recent_lab",
         "reason": "conflicting"
       }
     ],
-    "ambiguous": true,
-    "ambiguity_kind": "unreadable_lab_date",
-    "hand_labeled": false
+    "expected_status": "NEEDS_REVIEW",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_014": {
-    "payer_id": "payer_a",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "stage",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_015": {
-    "payer_id": "payer_b",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "recent_lab",
@@ -183,26 +183,26 @@
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_016": {
-    "payer_id": "payer_b",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "recent_lab",
         "reason": "stale"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_017": {
-    "payer_id": "payer_a",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "stage",
@@ -213,128 +213,128 @@
         "reason": "stale"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_018": {
-    "payer_id": "payer_a",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "recent_lab",
         "reason": "stale"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_019": {
-    "payer_id": "payer_b",
-    "expected_status": "NEEDS_REVIEW",
+    "ambiguity_kind": "conflicting_dose",
+    "ambiguous": true,
     "expected_gaps": [
       {
         "item": "treatment_plan",
         "reason": "conflicting"
       }
     ],
-    "ambiguous": true,
-    "ambiguity_kind": "conflicting_dose",
-    "hand_labeled": false
+    "expected_status": "NEEDS_REVIEW",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_020": {
-    "payer_id": "payer_c",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "prior_therapies",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_c"
   },
   "gen_021": {
-    "payer_id": "payer_b",
-    "expected_status": "READY",
-    "expected_gaps": [],
-    "ambiguous": false,
     "ambiguity_kind": null,
-    "hand_labeled": false
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_022": {
-    "payer_id": "payer_b",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "prior_therapies",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_023": {
-    "payer_id": "payer_a",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "stage",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_024": {
-    "payer_id": "payer_a",
-    "expected_status": "READY",
-    "expected_gaps": [],
-    "ambiguous": false,
     "ambiguity_kind": null,
-    "hand_labeled": false
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
   },
   "gen_025": {
-    "payer_id": "payer_c",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "treatment_plan",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_c"
   },
   "gen_026": {
-    "payer_id": "payer_b",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "stage",
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_b"
   },
   "gen_027": {
-    "payer_id": "payer_c",
-    "expected_status": "READY",
-    "expected_gaps": [],
-    "ambiguous": false,
     "ambiguity_kind": null,
-    "hand_labeled": false
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": false,
+    "payer_id": "payer_c"
   },
   "gen_028": {
-    "payer_id": "payer_c",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "prior_therapies",
@@ -345,29 +345,133 @@
         "reason": "missing"
       }
     ],
-    "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_c"
   },
   "gen_029": {
-    "payer_id": "payer_c",
-    "expected_status": "READY",
-    "expected_gaps": [],
-    "ambiguous": false,
     "ambiguity_kind": null,
-    "hand_labeled": false
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": false,
+    "payer_id": "payer_c"
   },
   "gen_030": {
-    "payer_id": "payer_a",
-    "expected_status": "NOT_READY",
+    "ambiguity_kind": null,
+    "ambiguous": false,
     "expected_gaps": [
       {
         "item": "treatment_plan",
         "reason": "missing"
       }
     ],
+    "expected_status": "NOT_READY",
+    "hand_labeled": false,
+    "payer_id": "payer_a"
+  },
+  "hand_01": {
     "ambiguous": false,
-    "ambiguity_kind": null,
-    "hand_labeled": false
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": true,
+    "payer_id": "payer_a"
+  },
+  "hand_02": {
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": true,
+    "payer_id": "payer_b"
+  },
+  "hand_03": {
+    "ambiguous": false,
+    "expected_gaps": [
+      {
+        "item": "stage",
+        "reason": "missing"
+      }
+    ],
+    "expected_status": "NOT_READY",
+    "hand_labeled": true,
+    "payer_id": "payer_b"
+  },
+  "hand_04": {
+    "ambiguous": false,
+    "expected_gaps": [
+      {
+        "item": "recent_lab",
+        "reason": "stale"
+      }
+    ],
+    "expected_status": "NOT_READY",
+    "hand_labeled": true,
+    "payer_id": "payer_a"
+  },
+  "hand_05": {
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": true,
+    "payer_id": "payer_b"
+  },
+  "hand_06": {
+    "ambiguous": false,
+    "expected_gaps": [],
+    "expected_status": "READY",
+    "hand_labeled": true,
+    "payer_id": "payer_c"
+  },
+  "hand_07": {
+    "ambiguous": false,
+    "expected_gaps": [
+      {
+        "item": "biomarker",
+        "reason": "missing"
+      },
+      {
+        "item": "prior_therapies",
+        "reason": "missing"
+      }
+    ],
+    "expected_status": "NOT_READY",
+    "hand_labeled": true,
+    "payer_id": "payer_b"
+  },
+  "hand_08": {
+    "ambiguous": true,
+    "expected_gaps": [
+      {
+        "item": "stage",
+        "reason": "conflicting"
+      }
+    ],
+    "expected_status": "NEEDS_REVIEW",
+    "hand_labeled": true,
+    "payer_id": "payer_a"
+  },
+  "hand_09": {
+    "ambiguous": true,
+    "expected_gaps": [
+      {
+        "item": "treatment_plan",
+        "reason": "conflicting"
+      }
+    ],
+    "expected_status": "NEEDS_REVIEW",
+    "hand_labeled": true,
+    "payer_id": "payer_c"
+  },
+  "hand_10": {
+    "ambiguous": false,
+    "expected_gaps": [
+      {
+        "item": "stage",
+        "reason": "missing"
+      }
+    ],
+    "expected_status": "NOT_READY",
+    "hand_labeled": true,
+    "payer_id": "payer_b"
   }
 }

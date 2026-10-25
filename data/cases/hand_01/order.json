@@ -1,0 +1,8 @@
+{
+  "case_id": "hand_01",
+  "payer_id": "payer_a",
+  "order_date": "2026-05-04",
+  "drug": "Examplumab",
+  "dose": "200 mg",
+  "schedule": "every 21 days"
+}

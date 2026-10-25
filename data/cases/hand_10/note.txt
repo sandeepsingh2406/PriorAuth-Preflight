@@ -1,0 +1,18 @@
+SYNTHETIC NOTE
+Record number: SYN-90010
+Visit date: 2026-07-30
+Gynecologic oncology (fictional patient, 56-year-old)
+
+Diagnosis: Endometrial carcinoma, endometrioid type (ICD-10 C54.1), biopsy-confirmed 2026-04-22.
+
+Staging: Final surgical pathology review is pending and stage has not yet been assigned.
+
+Family history: Mother had stage II colon cancer at age 70.
+
+Biomarkers: Mismatch repair proficient (reported 2026-05-26).
+
+Prior therapy: Total hysterectomy 2026-05-14. Adjuvant pelvic radiation completed 2026-07-01.
+
+Labs: CBC and metabolic panel 2026-07-20. WBC 6.3, hemoglobin 12.7, platelets 223, creatinine 0.8.
+
+Plan: Start Samplimab 400 mg IV every 28 days.

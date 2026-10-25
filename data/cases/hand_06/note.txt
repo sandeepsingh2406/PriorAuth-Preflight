@@ -1,0 +1,16 @@
+SYNTHETIC NOTE
+Record number: SYN-90006
+Visit date: 2026-06-12
+Oncology new patient visit (fictional patient, 49-year-old)
+
+Diagnosis: Melanoma (ICD-10 C43.9), biopsy-confirmed 2026-04-27.
+
+Stage: Stage IV (M1b) with lung metastases on CT 2026-05-06.
+
+Biomarkers: BRAF V600E mutation detected (reported 2026-05-19).
+
+Prior therapy: Treatment-naive. No prior systemic therapy, radiation or investigational agents. Wide local excision of the primary lesion only.
+
+Labs: CBC and metabolic panel 2026-06-01. WBC 7.2, hemoglobin 13.6, platelets 268, creatinine 0.8.
+
+Plan: Start Samplimab 400 mg IV every 28 days.
