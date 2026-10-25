@@ -12,6 +12,7 @@ from src.models import (
     Gap,
     GapReport,
     Order,
+    OutreachRequest,
     PayerChecklist,
     Status,
 )
@@ -217,3 +218,20 @@ def escalate_to_human(report: GapReport, reason: str) -> GapReport:
     if report.escalation_reason:
         reason = f"{report.escalation_reason}; {reason}"
     return report.model_copy(update={"status": "NEEDS_REVIEW", "escalation_reason": reason})
+
+
+def build_outreach_request(report: GapReport) -> OutreachRequest:
+    """Reduce a report to the gap list for the Outreach agent: no fields, quotes or passages.
+
+    Only the report's identifiers, status, gaps and escalation reason are copied. Gap
+    text is written by code and never repeats quoted note text.
+    """
+    if not isinstance(report, GapReport):
+        raise TypeError("build_outreach_request only accepts a GapReport")
+    return OutreachRequest(
+        case_id=report.case_id,
+        payer_id=report.payer_id,
+        status=report.status,
+        gaps=[gap.model_copy() for gap in report.gaps],
+        escalation_reason=report.escalation_reason,
+    )

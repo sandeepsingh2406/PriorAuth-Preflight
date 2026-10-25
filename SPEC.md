@@ -93,8 +93,9 @@ Why a handoff: least privilege. The Outreach agent sees only the list of missing
 - `ExtractedField`: `name`, `value: str | None`, `quote: str | None`, `found: bool`, `date: date | None` (the lab date, used for recency), `conflicting_quotes: list[str]` (other quotes that contradict `quote`; each is validated verbatim like `quote`, and any that survive make the item `conflicting`)
 - `Gap`: `item`, `reason` (`missing` | `stale` | `conflicting`), `detail`
 - `GapReport`: `case_id`, `payer_id`, `status` (`READY` | `NOT_READY` | `NEEDS_REVIEW`), `fields`, `gaps`, `escalation_reason: str | None`, `unreadable_passages: list[str]` (verified verbatim in the note)
+- `DraftText`: `subject`, `body`. What the Outreach model writes; code adds `requested_items` (taken from the gaps, never from the model) to make a `Draft`.
 - `Draft`: `subject`, `body`, `requested_items`
-- `OutreachRequest` (not built yet; added with the Outreach agent): `case_id`, `payer_id`, `status`, `gaps`, `escalation_reason`. The Outreach agent's only input. It has no `fields` and no `unreadable_passages`, so no text from the note.
+- `OutreachRequest` (built by `build_outreach_request` in `src/tools.py`, extra fields refused): `case_id`, `payer_id`, `status`, `gaps`, `escalation_reason`. The Outreach agent's only input. It has no `fields` and no `unreadable_passages`, so no text from the note.
 
 Supporting models (also in `src/models.py`):
 

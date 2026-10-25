@@ -49,6 +49,28 @@ class GapReport(BaseModel):
     unreadable_passages: list[str] = Field(default_factory=list)  # verified verbatim in the note
 
 
+class OutreachRequest(BaseModel):
+    """The only thing the Outreach agent sees: the gap list, with no text from the note.
+
+    It deliberately has no `fields` and no `unreadable_passages`, and refuses extras.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    case_id: str
+    payer_id: str
+    status: Status
+    gaps: list[Gap]
+    escalation_reason: str | None = None
+
+
+class DraftText(BaseModel):
+    """What the Outreach model writes. Code adds the requested items to make a Draft."""
+
+    subject: str
+    body: str
+
+
 class Draft(BaseModel):
     """Internal request to the ordering provider's care team. Never sent."""
 
