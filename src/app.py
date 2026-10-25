@@ -32,11 +32,14 @@ PAYERS = ["payer_a", "payer_b", "payer_c"]
 MAX_NOTE_CHARS = 20_000
 PASTED_CASE_ID = "pasted_note"
 APPROVE_LABEL = "Approve draft (logs decision only)"  # it records a decision; nothing is sent
-BANNER = (
-    "# PriorAuth Preflight\n"
-    "Synthetic data only. This tool checks a packet and drafts an internal request. "
-    "**It never sends, submits or emails anything**: you review everything."
-)
+BANNER = """# PriorAuth Preflight
+
+**How it works**
+1. The model reads the note and quotes the evidence for each item the payer requires.
+2. Plain code checks every quote word for word against the note, compares it with the payer's rules, and decides the status.
+3. If items are missing, a second model drafts an internal request from the gap list only. A person reviews everything.
+
+**Limits.** Synthetic notes and invented payer rules only. It checks documentation, not whether the treatment is right. It never sends, submits or emails anything. The model can miss or misread, so check the quotes."""
 STATUS_STYLE = {
     "READY": ("#1b7f3b", "All required items are documented with verified quotes."),
     "NOT_READY": ("#b45309", "Some required items are missing or out of date."),

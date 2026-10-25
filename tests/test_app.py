@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from src.app import (
+    BANNER,
     CaseForm,
     build_app,
     case_id_for,
@@ -324,3 +325,22 @@ def test_only_run_is_a_primary_button_and_approve_is_neutral() -> None:
     assert variants["Run"] == "primary"
     assert variants[APPROVE_LABEL] == "secondary"
     assert [v for v, variant in variants.items() if variant == "primary"] == ["Run"]
+
+
+def test_the_title_block_explains_how_it_works_in_three_steps_and_states_the_limits() -> None:
+    text = BANNER
+    assert text.startswith("# PriorAuth Preflight")
+    assert "How it works" in text
+    steps = [line for line in text.splitlines() if line[:3] in ("1. ", "2. ", "3. ")]
+    assert len(steps) == 3
+    assert "quotes the evidence" in steps[0]
+    assert "word for word" in steps[1] and "decides the status" in steps[1]
+    assert "gap list only" in steps[2] and "person reviews everything" in steps[2]
+    assert "Limits" in text
+    for fragment in ["Synthetic notes", "invented payer rules", "not whether the treatment is right", "never sends", "check the quotes"]:
+        assert fragment in text, fragment
+
+
+def test_the_title_block_is_on_the_page() -> None:
+    demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
+    assert BANNER in {getattr(b, "value", None) for b in demo.blocks.values()}
