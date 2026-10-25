@@ -6,6 +6,9 @@
 # Runtime audit log
 audit/
 
+# Throwaway experiments
+scratch/
+
 # Private working notes
 PLAN.md
 NOTES.md
