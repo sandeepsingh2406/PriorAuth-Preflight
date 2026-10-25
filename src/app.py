@@ -274,6 +274,7 @@ def _evidence_html(
         parts += [_quote(p) for p in report.unreadable_passages]
 
     required = {item.name for item in checklist.items}
+    conflicted = {g.item for g in report.gaps if g.reason == "conflicting"}
     rows = []
     for item in _known_items():
         f = fields.get(item.name)
@@ -281,6 +282,13 @@ def _evidence_html(
             rows.append(f"<tr><td>{_e(item.name)}</td><td>Not required by this payer</td><td>not checked</td><td></td></tr>")
         elif not checked:
             rows.append(f"<tr><td>{_e(item.name)}</td><td>Required</td><td>not checked</td><td></td></tr>")
+        elif item.name in conflicted:
+            quotes = ([f.quote] if f and f.quote else []) + (f.conflicting_quotes if f else [])
+            recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[item.name])}</div>' if item.name in lab_lines else ""
+            rows.append(
+                f"<tr><td>{_e(item.name)}</td><td>Required</td><td>conflicting</td>"
+                f"<td>{''.join(_quote(q) for q in quotes)}{recency}</td></tr>"
+            )
         elif f is not None and f.found and f.quote:
             date = f" (lab date {_e(f.date)})" if f.date else ""
             recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[item.name])}</div>' if item.name in lab_lines else ""

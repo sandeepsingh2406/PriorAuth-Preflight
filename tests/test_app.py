@@ -699,3 +699,65 @@ def test_the_run_itself_keeps_the_original_draft_for_the_record(tmp_path: Path) 
     """The model's own text is untouched on the run; only what is shown to the person is swapped."""
     view, _ = _run_recording("hand_04", tmp_path)
     assert "hand_04" in view.session.run.draft.subject and "SYN-90004" not in view.session.run.draft.subject
+
+
+# --- conflicting items are marked in the table, not just in the gap list ---------------------------
+
+
+def _cells(row: str) -> list[str]:
+    return re.findall(r"<td>(.*?)</td>", row, flags=re.S)
+
+
+def test_a_conflicting_item_says_conflicting_and_shows_both_quotes_in_its_row(tmp_path: Path) -> None:
+    html = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
+    cells = _cells(_row(html, "stage"))
+    assert cells[1] == "Required" and cells[2] == "conflicting"
+    assert "Staging: Stage II (cT2 N0 M0)" in cells[3]
+    assert "stage IV non-small cell lung cancer" in cells[3]
+
+
+def test_items_without_a_conflict_still_say_found(tmp_path: Path) -> None:
+    html = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
+    assert _cells(_row(html, "diagnosis"))[2] == "found"
+    assert _cells(_row(html, "treatment_plan"))[2] == "found"
+
+
+def test_a_conflicting_lab_keeps_its_recency_line(tmp_path: Path) -> None:
+    other = "WBC 6.1, hemoglobin 12.4, platelets 214, creatinine 0.9."  # really in the note, so it survives validation
+    html = _run("hand_01", tmp_path, conflicts={"recent_lab": [other]}).evidence_html
+    cells = _cells(_row(html, "recent_lab"))
+    assert cells[2] == "conflicting"
+    assert other in cells[3]
+    assert "Lab 2026-04-22, order 2026-05-04: 12 days, window 30, within window." in cells[3]
+
+
+def test_a_lab_with_no_date_is_marked_conflicting_with_the_reason(tmp_path: Path) -> None:
+    _, note = load_case("hand_01")
+    fields = [f.model_copy(update={"date": None}) if f.name == "recent_lab" else f for f in _extraction(note)(None).fields]
+    view = run_case(_form("hand_01"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    cells = _cells(_row(view.evidence_html, "recent_lab"))
+    assert cells[2] == "conflicting" and "Lab date missing or unreadable." in cells[3]
+
+
+def test_a_failed_main_quote_does_not_hide_a_real_conflicting_quote(tmp_path: Path) -> None:
+    """The model's main quote is invented and dropped; the real contradicting quote is still shown."""
+    _, note = load_case("hand_08")
+    real = "Assessment: 66-year-old with stage IV non-small cell lung cancer, here to start immunotherapy."
+    fields = [
+        ExtractedField(name="stage", value="Stage IX", quote="Stage IX per nobody", found=True, conflicting_quotes=[real])
+        if f.name == "stage" else f
+        for f in _extraction(note)(None).fields
+    ]
+    view = run_case(_form("hand_08"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    cells = _cells(_row(view.evidence_html, "stage"))
+    assert cells[2] == "conflicting"
+    assert real in cells[3] and "Stage IX per nobody" not in cells[3]
+
+
+def test_a_conflicting_row_is_escaped(tmp_path: Path) -> None:
+    """The risky text is really in the note (so it survives validation) and must still be shown as text."""
+    evil = "<script>alert(1)</script>"
+    _, note = load_case("hand_08")
+    html = _run("hand_08", tmp_path, conflicts={"stage": [evil]}, note=note + evil + "\n").evidence_html
+    assert "<script>" not in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in _cells(_row(html, "stage"))[3]
