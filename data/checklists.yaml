@@ -1,0 +1,66 @@
+# Invented payer checklists for synthetic prior authorization packets.
+# These are illustrative only and are not real payer policy. "Payer A/B/C" are
+# made-up names. Each entry matches the PayerChecklist model in src/models.py.
+#
+# kind: field = a value quoted from the note
+# kind: lab   = a dated lab result, checked against lab_window_days
+payers:
+  - payer_id: payer_a
+    lab_window_days: 30
+    items:
+      - name: diagnosis
+        description: Confirmed diagnosis with its ICD-10 code
+        kind: field
+      - name: stage
+        description: Cancer stage
+        kind: field
+      - name: biomarker
+        description: Relevant biomarker or test result
+        kind: field
+      - name: recent_lab
+        description: Lab result dated within the payer's recency window
+        kind: lab
+      - name: treatment_plan
+        description: Treatment plan with drug, dose and schedule
+        kind: field
+
+  - payer_id: payer_b
+    lab_window_days: 45
+    items:
+      - name: diagnosis
+        description: Confirmed diagnosis with its ICD-10 code
+        kind: field
+      - name: stage
+        description: Cancer stage
+        kind: field
+      - name: biomarker
+        description: Relevant biomarker or test result
+        kind: field
+      - name: prior_therapies
+        description: Prior therapies tried, with outcomes
+        kind: field
+      - name: recent_lab
+        description: Lab result dated within the payer's recency window
+        kind: lab
+      - name: treatment_plan
+        description: Treatment plan with drug, dose and schedule
+        kind: field
+
+  - payer_id: payer_c
+    lab_window_days: 60
+    items:
+      - name: diagnosis
+        description: Confirmed diagnosis with its ICD-10 code
+        kind: field
+      - name: biomarker
+        description: Relevant biomarker or test result
+        kind: field
+      - name: prior_therapies
+        description: Prior therapies tried, with outcomes
+        kind: field
+      - name: recent_lab
+        description: Lab result dated within the payer's recency window
+        kind: lab
+      - name: treatment_plan
+        description: Treatment plan with drug, dose and schedule
+        kind: field

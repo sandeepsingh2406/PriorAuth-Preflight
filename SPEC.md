@@ -94,6 +94,7 @@ Supporting models (also in `src/models.py`):
 ## 7. Synthetic data
 
 - `data/checklists.yaml`: three invented payers ("Payer A", "Payer B", "Payer C") with different required items and a lab recency window (for example 30 days, 45 days, 60 days). No real payer names.
+- Payer ids are `payer_a` (30 day lab window), `payer_b` (45 days) and `payer_c` (60 days). Item names are `diagnosis`, `stage`, `biomarker`, `prior_therapies`, `recent_lab`, `treatment_plan`. Payer A does not require `prior_therapies`; Payer C does not require `stage`; Payer B requires all six. Each payer has exactly one `lab` item, `recent_lab`.
 - Required items (illustrative): confirmed diagnosis with code, cancer stage, relevant biomarker or test result, prior therapies tried with outcomes, recent lab result within the payer window, treatment plan (drug, dose, schedule).
 - `scripts/gen_cases.py` generates about 30 notes from templates with seeded gaps (missing stage, stale labs, missing prior therapy, missing plan) and 4 to 5 ambiguous or contradictory notes. Use a fixed random seed.
 - `data/labels.json`: expected gaps per case. Hand-write and hand-label 10 cases yourself. These 10 are the trusted core of the evaluation. Do not let the generator or the model overwrite them.
