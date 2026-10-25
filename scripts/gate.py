@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from dotenv import load_dotenv
 
 from src.agents import AnalysisRun, analyze_packet, model_name
-from src.run import ENV_FILE, load_case
+from src.run import ENV_FILE, format_report, load_case
 from src.tools import PROJECT_ROOT, audit_log_path
 
 HAND_CASES = [f"hand_{i:02d}" for i in range(1, 11)]
@@ -128,17 +128,20 @@ def main() -> int:
     labels = json.loads(LABELS_PATH.read_text())
     before = len(_audit_lines())
 
+    print(f"Model: {model}")
     results, runs = [], {}
     for case_id in HAND_CASES:
         order, note = load_case(case_id)
         run = analyze_packet(order, note)
         runs[case_id] = (note, run)
         results.append(evaluate_case(case_id, labels[case_id], note, run))
+        print(f"\n################ {case_id}")
+        print(format_report(run))
 
     new_lines = _audit_lines()[before:]
     audit_ok = [line["case_id"] for line in new_lines] == HAND_CASES
 
-    print(f"Model: {model}\n")
+    print()
     print(f"{'case':8} {'expected':13} {'actual':13} {'match':5}  expected gaps  |  actual gaps")
     for r in results:
         print(
