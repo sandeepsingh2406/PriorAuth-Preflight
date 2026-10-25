@@ -16,6 +16,7 @@ from src.app import (
     list_cases,
     load_case_into_form,
     main,
+    render_requirements,
     run_case,
 )
 from src.models import ChecklistItem, DraftText, ExtractedField, ExtractionResult, Order, PayerChecklist
@@ -491,3 +492,105 @@ def test_only_the_lab_row_gets_a_recency_line(tmp_path: Path) -> None:
     html = _run("hand_05", tmp_path).evidence_html
     assert html.count(", window ") == 1  # one recency line for the whole table
     assert "Lab date missing or unreadable" not in html  # non-lab rows have no date and must stay silent
+
+
+# --- the payer requirements panel and Required marking ----------------------------------------
+
+
+def _panel_items(html: str) -> list[str]:
+    return re.findall(r"<strong>(\w+)</strong>", html)
+
+
+@pytest.mark.parametrize("payer", ["payer_a", "payer_b", "payer_c"])
+def test_the_panel_lists_exactly_the_payers_required_items_and_lab_window(payer: str) -> None:
+    checklist = lookup_payer_checklist(payer)
+    html = render_requirements(payer)
+    assert _panel_items(html) == [i.name for i in checklist.items]
+    assert f"within {checklist.lab_window_days} days of the order date" in html
+    import html as html_lib
+
+    for item in checklist.items:
+        assert html_lib.escape(item.description) in html  # shown escaped, like all dynamic text
+
+
+def test_the_panel_differs_between_payers() -> None:
+    a, b, c = (render_requirements(p) for p in ["payer_a", "payer_b", "payer_c"])
+    assert "prior_therapies" not in _panel_items(a) and "prior_therapies" in _panel_items(b)
+    assert "stage" in _panel_items(a) and "stage" not in _panel_items(c)
+    assert "30 days" in a and "45 days" in b and "60 days" in c
+
+
+def test_the_panel_says_the_rules_are_invented() -> None:
+    assert "invented" in render_requirements("payer_a").lower()
+
+
+@pytest.mark.parametrize("bad", ["", None, "payer_z"])
+def test_the_panel_handles_a_missing_or_unknown_payer(bad: object) -> None:
+    assert "Choose a payer" in render_requirements(bad)  # type: ignore[arg-type]
+
+
+def test_the_panel_is_a_collapsed_accordion_filled_for_the_default_payer_and_updated_on_change() -> None:
+    import gradio as gr
+
+    demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
+    accordions = [b for b in demo.blocks.values() if isinstance(b, gr.Accordion) and b.label == "Payer requirements"]
+    assert len(accordions) == 1 and accordions[0].open is False
+    assert render_requirements("payer_a") in {getattr(b, "value", None) for b in demo.blocks.values()}
+    payer = next(b for b in demo.blocks.values() if isinstance(b, gr.Dropdown) and b.label == "Payer")
+    targets = [tuple(t) for dep in demo.config["dependencies"] for t in dep["targets"]]
+    assert (payer._id, "change") in targets
+
+
+def _table(html: str) -> str:
+    return html.split("Evidence for each item")[1]
+
+
+def _row(html: str, item: str) -> str:
+    return next(r for r in _table(html).split("<tr>") if f"<td>{item}</td>" in r)
+
+
+def test_every_row_is_marked_required_or_not_for_the_payer(tmp_path: Path) -> None:
+    html = _run("hand_01", tmp_path).evidence_html  # payer_a: no prior_therapies
+    for item in ["diagnosis", "stage", "biomarker", "recent_lab", "treatment_plan"]:
+        assert "Required" in _row(html, item) and "Not required" not in _row(html, item)
+    row = _row(html, "prior_therapies")
+    assert "Not required by this payer" in row and "not checked" in row
+
+
+def test_stage_is_not_required_for_payer_c(tmp_path: Path) -> None:
+    html = _run("hand_06", tmp_path).evidence_html  # payer_c
+    row = _row(html, "stage")
+    assert "Not required by this payer" in row and "not checked" in row
+    assert "Stage IV (M1b)" not in row  # no quote is shown for an item nobody asked about
+
+
+def test_payer_b_requires_all_six_items(tmp_path: Path) -> None:
+    html = _run("hand_05", tmp_path).evidence_html
+    assert "Not required" not in html
+    assert len(re.findall(r"<td>Required</td>", html)) == 6
+
+
+def test_a_required_item_the_model_left_out_shows_as_required_and_not_found(tmp_path: Path) -> None:
+    _, note = load_case("hand_05")
+    fields = [f for f in _extraction(note)(None).fields if f.name != "prior_therapies"]
+    view = run_case(_form("hand_05"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    row = _row(view.evidence_html, "prior_therapies")
+    assert "Required" in row and "not found" in row
+    assert "prior_therapies" in view.evidence_html.split("Evidence for each item")[0]  # and it is a gap
+
+
+def test_when_the_model_fails_required_items_say_not_checked_rather_than_not_found(tmp_path: Path) -> None:
+    def broken(prompt: str) -> ExtractionResult:
+        raise RuntimeError("boom")
+
+    view = run_case(_form("hand_01"), llm=broken, outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    html = view.evidence_html
+    assert "not found" not in html
+    assert "not checked" in _row(html, "stage")
+    assert "Required" in _row(html, "stage")
+
+
+def test_the_table_lists_items_in_a_stable_order(tmp_path: Path) -> None:
+    html = _table(_run("hand_01", tmp_path).evidence_html)
+    names = re.findall(r"<tr><td>(\w+)</td>", html)
+    assert names == ["diagnosis", "stage", "biomarker", "prior_therapies", "recent_lab", "treatment_plan"]

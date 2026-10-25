@@ -25,7 +25,7 @@ from src.agents import (
     model_name,
     record_decision,
 )
-from src.models import GapReport, Order
+from src.models import ChecklistItem, GapReport, Order, PayerChecklist
 from src.run import CASES_DIR, ENV_FILE, load_case
 from src.tools import lookup_payer_checklist
 
@@ -185,11 +185,45 @@ def _status_html(report: GapReport) -> str:
     )
 
 
+def _known_items() -> list[ChecklistItem]:
+    """Every item any payer asks about, in the order of the payer that asks for the most."""
+    checklists = [lookup_payer_checklist(p) for p in PAYERS]
+    items = list(max(checklists, key=lambda c: len(c.items)).items)
+    seen = {item.name for item in items}
+    for checklist in checklists:
+        for item in checklist.items:
+            if item.name not in seen:
+                items.append(item)
+                seen.add(item.name)
+    return items
+
+
+def render_requirements(payer_id: str | None) -> str:
+    """The selected payer's required items and lab window, read from data/checklists.yaml."""
+    if payer_id not in PAYERS:
+        return "<p>Choose a payer to see its requirements.</p>"
+    checklist = lookup_payer_checklist(payer_id)
+    items = "".join(
+        f"<li><strong>{_e(i.name)}</strong>: {_e(i.description)}{' (a dated lab)' if i.kind == 'lab' else ''}</li>"
+        for i in checklist.items
+    )
+    return (
+        f"<p>These are invented payer rules for this prototype (from data/checklists.yaml), not real payer policy.</p>"
+        f"<p>Payer {_e(payer_id)} requires:</p><ul>{items}</ul>"
+        f"<p>Lab results must be dated within {checklist.lab_window_days} days of the order date.</p>"
+    )
+
+
 def _quote(text: str) -> str:
     return f'<blockquote style="margin:4px 0 4px 12px;padding-left:8px;border-left:3px solid #999">{_e(text)}</blockquote>'
 
 
-def _evidence_html(report: GapReport, lab_lines: dict[str, str] | None = None) -> str:
+def _evidence_html(
+    report: GapReport,
+    checklist: PayerChecklist,
+    lab_lines: dict[str, str] | None = None,
+    checked: bool = True,
+) -> str:
     fields = {f.name: f for f in report.fields}
     lab_lines = lab_lines or {}
     parts = []
@@ -217,15 +251,24 @@ def _evidence_html(report: GapReport, lab_lines: dict[str, str] | None = None) -
         parts.append("<h4>Unreadable text in the note</h4>")
         parts += [_quote(p) for p in report.unreadable_passages]
 
+    required = {item.name for item in checklist.items}
     rows = []
-    for f in report.fields:
-        if f.found and f.quote:
+    for item in _known_items():
+        f = fields.get(item.name)
+        if item.name not in required:
+            rows.append(f"<tr><td>{_e(item.name)}</td><td>Not required by this payer</td><td>not checked</td><td></td></tr>")
+        elif not checked:
+            rows.append(f"<tr><td>{_e(item.name)}</td><td>Required</td><td>not checked</td><td></td></tr>")
+        elif f is not None and f.found and f.quote:
             date = f" (lab date {_e(f.date)})" if f.date else ""
-            recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[f.name])}</div>' if f.name in lab_lines else ""
-            rows.append(f"<tr><td>{_e(f.name)}</td><td>found{date}</td><td>{_quote(f.quote)}{recency}</td></tr>")
+            recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[item.name])}</div>' if item.name in lab_lines else ""
+            rows.append(f"<tr><td>{_e(item.name)}</td><td>Required</td><td>found{date}</td><td>{_quote(f.quote)}{recency}</td></tr>")
         else:
-            rows.append(f"<tr><td>{_e(f.name)}</td><td>not found</td><td></td></tr>")
-    parts.append("<h4>Evidence for each item</h4><table><tr><th>Item</th><th>Result</th><th>Quote from the note</th></tr>")
+            rows.append(f"<tr><td>{_e(item.name)}</td><td>Required</td><td>not found</td><td></td></tr>")
+    parts.append(
+        "<h4>Evidence for each item</h4><table><tr><th>Item</th><th>Required?</th><th>Result</th>"
+        "<th>Quote from the note</th></tr>"
+    )
     parts.append("".join(rows) + "</table>")
     return "".join(parts)
 
@@ -269,7 +312,7 @@ def run_case(
     return RunView(
         notice=notice,
         status_html=_status_html(run.report),
-        evidence_html=_evidence_html(run.report, lab_lines),
+        evidence_html=_evidence_html(run.report, checklist, lab_lines, checked="check_packet" in run.tools_called),
         trace=_trace(run, model_label),
         show_draft=run.draft is not None,
         draft_label="Draft request to the care team (not sent)",
@@ -342,6 +385,8 @@ def build_app(
                 case = gr.Dropdown(choices=list_cases(), value=None, label="Case (or leave empty and paste a note)", filterable=True)
                 note = gr.Textbox(label="Clinical note (synthetic)", lines=14, max_lines=30)
                 payer = gr.Dropdown(choices=PAYERS, value="payer_a", label="Payer")
+                with gr.Accordion("Payer requirements", open=False):
+                    requirements = gr.HTML(value=render_requirements("payer_a"))
                 order_date = gr.Textbox(label="Order date (YYYY-MM-DD)")
                 drug = gr.Textbox(label="Drug")
                 dose = gr.Textbox(label="Dose")
@@ -396,6 +441,7 @@ def build_app(
             return on_decision
 
         case.change(on_case_change, inputs=case, outputs=[note, payer, order_date, drug, dose, schedule])
+        payer.change(render_requirements, inputs=payer, outputs=requirements)
         run_button.click(
             on_run,
             inputs=[case, note, payer, order_date, drug, dose, schedule],
