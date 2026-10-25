@@ -31,6 +31,7 @@ from src.run import CASES_DIR, ENV_FILE, load_case
 PAYERS = ["payer_a", "payer_b", "payer_c"]
 MAX_NOTE_CHARS = 20_000
 PASTED_CASE_ID = "pasted_note"
+APPROVE_LABEL = "Approve draft (logs decision only)"  # it records a decision; nothing is sent
 BANNER = (
     "# PriorAuth Preflight\n"
     "Synthetic data only. This tool checks a packet and drafts an internal request. "
@@ -312,7 +313,7 @@ def build_app(
                     subject = gr.Textbox(label="Draft request to the care team (not sent): subject", interactive=True)
                     body = gr.Textbox(label="Body (you can edit it)", lines=8, interactive=True)
                     with gr.Row():
-                        approve = gr.Button("Approve", variant="primary")
+                        approve = gr.Button(APPROVE_LABEL, variant="secondary")
                         edit = gr.Button("Edit")
                         discard = gr.Button("Discard")
                 reviewed = gr.Button("Mark reviewed", visible=False)

@@ -19,6 +19,8 @@ from src.app import (
 from src.models import DraftText, ExtractedField, ExtractionResult
 from src.run import load_case
 
+APPROVE_LABEL = "Approve draft (logs decision only)"
+
 PREFIXES = {
     "diagnosis": ("Diagnosis:",),
     "stage": ("Stage:", "Staging:"),
@@ -288,7 +290,7 @@ def test_each_run_has_its_own_session_and_decisions_link_to_it(tmp_path: Path) -
 def test_app_builds_with_the_agreed_controls_and_no_telemetry() -> None:
     demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
     labels = {getattr(b, "value", None) for b in demo.blocks.values()}
-    for label in ["Run", "Approve", "Edit", "Discard", "Mark reviewed"]:
+    for label in ["Run", APPROVE_LABEL, "Edit", "Discard", "Mark reviewed"]:
         assert label in labels, label
     assert demo.analytics_enabled is False
 
@@ -311,3 +313,14 @@ def test_main_without_a_model_name_explains_and_exits_2(
     monkeypatch.delenv("USE_DEMO_MODEL", raising=False)
     assert main(env_file=None) == 2
     assert "MODEL_DEV" in capsys.readouterr().err
+
+
+def test_only_run_is_a_primary_button_and_approve_is_neutral() -> None:
+    """Approve only logs a decision (nothing is sent), so it must not look like the main action."""
+    import gradio as gr
+
+    demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
+    variants = {b.value: b.variant for b in demo.blocks.values() if isinstance(b, gr.Button)}
+    assert variants["Run"] == "primary"
+    assert variants[APPROVE_LABEL] == "secondary"
+    assert [v for v, variant in variants.items() if variant == "primary"] == ["Run"]
