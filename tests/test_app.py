@@ -12,13 +12,15 @@ from src.app import (
     build_app,
     case_id_for,
     decide,
+    lab_recency,
     list_cases,
     load_case_into_form,
     main,
     run_case,
 )
-from src.models import DraftText, ExtractedField, ExtractionResult
+from src.models import ChecklistItem, DraftText, ExtractedField, ExtractionResult, Order, PayerChecklist
 from src.run import load_case
+from src.tools import check_packet, lookup_payer_checklist
 
 APPROVE_LABEL = "Approve draft (logs decision only)"
 
@@ -404,3 +406,88 @@ def test_the_reason_is_shown_when_unreadable_text_comes_with_a_conflict(tmp_path
         audit_path=tmp_path / "audit.jsonl",
     )
     assert "Escalation reason" in view.evidence_html
+
+
+# --- the lab recency line --------------------------------------------------------------------
+
+D = datetime.date
+
+
+def test_lab_line_for_a_stale_lab() -> None:
+    result = lab_recency(D(2026, 4, 10), D(2026, 5, 11), 30)
+    assert (result.age, result.verdict) == (31, "stale")
+    assert result.text == "Lab 2026-04-10, order 2026-05-11: 31 days, window 30, stale."
+
+
+def test_lab_line_for_a_lab_exactly_at_the_window() -> None:
+    result = lab_recency(D(2026, 4, 10), D(2026, 5, 25), 45)
+    assert (result.age, result.verdict) == (45, "within window")
+    assert result.text == "Lab 2026-04-10, order 2026-05-25: 45 days, window 45, within window."
+
+
+def test_lab_line_uses_the_singular_for_one_day_and_zero_days_is_fine() -> None:
+    assert lab_recency(D(2026, 5, 3), D(2026, 5, 4), 30).text == "Lab 2026-05-03, order 2026-05-04: 1 day, window 30, within window."
+    assert lab_recency(D(2026, 5, 4), D(2026, 5, 4), 30).text.endswith("0 days, window 30, within window.")
+
+
+def test_lab_line_for_a_lab_after_the_order() -> None:
+    result = lab_recency(D(2026, 5, 5), D(2026, 5, 4), 30)
+    assert (result.age, result.verdict) == (-1, "after the order date")
+    assert result.text == "Lab 2026-05-05, order 2026-05-04: -1 days, window 30, after the order date."
+
+
+def test_lab_line_when_the_date_is_missing() -> None:
+    result = lab_recency(None, D(2026, 5, 4), 30)
+    assert (result.age, result.verdict) == (None, "date missing or unreadable")
+    assert result.text == "Lab date missing or unreadable."
+
+
+@pytest.mark.parametrize("payer", ["payer_a", "payer_b", "payer_c"])
+def test_the_lab_verdict_always_agrees_with_check_packet(payer: str) -> None:
+    """The screen recomputes the age; this keeps it from ever disagreeing with the real check."""
+    window = lookup_payer_checklist(payer).lab_window_days
+    order_date = D(2026, 6, 1)
+    checklist = PayerChecklist(
+        payer_id=payer,
+        lab_window_days=window,
+        items=[ChecklistItem(name="recent_lab", description="Lab", kind="lab")],
+    )
+    order = Order(case_id="t", payer_id=payer, order_date=order_date, drug="d", dose="1 mg", schedule="s")
+    expected = {"within window": [], "stale": ["stale"], "after the order date": ["conflicting"], "date missing or unreadable": ["conflicting"]}
+    for age in [-3, -1, 0, 1, window - 1, window, window + 1, window + 30, None]:
+        lab_date = None if age is None else order_date - datetime.timedelta(days=age)
+        field = ExtractedField(name="recent_lab", value="Lab", quote="Lab drawn", found=True, date=lab_date)
+        reasons = [g.reason for g in check_packet([field], checklist, order)]
+        assert reasons == expected[lab_recency(lab_date, order_date, window).verdict], (payer, age)
+
+
+def test_the_stale_lab_row_shows_the_recency_line(tmp_path: Path) -> None:
+    html = _run("hand_04", tmp_path).evidence_html
+    assert "Lab 2026-04-10, order 2026-05-11: 31 days, window 30, stale." in html
+
+
+def test_the_within_window_lab_row_shows_the_recency_line(tmp_path: Path) -> None:
+    view = _run("hand_05", tmp_path)
+    assert "READY" in view.status_html
+    assert "Lab 2026-04-10, order 2026-05-25: 45 days, window 45, within window." in view.evidence_html
+
+
+def test_a_lab_without_a_date_says_so_in_its_row(tmp_path: Path) -> None:
+    _, note = load_case("hand_01")
+    fields = _extraction(note)(None).fields
+    fields = [f.model_copy(update={"date": None}) if f.name == "recent_lab" else f for f in fields]
+    view = run_case(_form("hand_01"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    assert "Lab date missing or unreadable." in view.evidence_html
+
+
+def test_a_missing_lab_has_no_recency_line(tmp_path: Path) -> None:
+    _, note = load_case("hand_01")
+    fields = [f for f in _extraction(note)(None).fields if f.name != "recent_lab"]
+    view = run_case(_form("hand_01"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    assert "window" not in view.evidence_html.split("Evidence for each item")[1]
+
+
+def test_only_the_lab_row_gets_a_recency_line(tmp_path: Path) -> None:
+    html = _run("hand_05", tmp_path).evidence_html
+    assert html.count(", window ") == 1  # one recency line for the whole table
+    assert "Lab date missing or unreadable" not in html  # non-lab rows have no date and must stay silent

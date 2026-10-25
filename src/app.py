@@ -27,6 +27,7 @@ from src.agents import (
 )
 from src.models import GapReport, Order
 from src.run import CASES_DIR, ENV_FILE, load_case
+from src.tools import lookup_payer_checklist
 
 PAYERS = ["payer_a", "payer_b", "payer_c"]
 MAX_NOTE_CHARS = 20_000
@@ -144,6 +145,30 @@ def _to_order(form: CaseForm) -> tuple[Order | None, str | None]:
     return order, None
 
 
+@dataclass
+class LabRecency:
+    """How old the lab is against the payer's window, in words for the screen."""
+
+    age: int | None
+    verdict: str
+    text: str
+
+
+def lab_recency(lab_date: datetime.date | None, order_date: datetime.date, window: int) -> LabRecency:
+    """Recompute the lab age the way check_packet judges it (stale only when strictly over the window).
+
+    check_packet only reports a gap when something is wrong, so it does not expose these numbers
+    for a lab that is within the window. A test keeps this and check_packet in agreement.
+    """
+    if lab_date is None:
+        return LabRecency(None, "date missing or unreadable", "Lab date missing or unreadable.")
+    age = (order_date - lab_date).days
+    verdict = "after the order date" if age < 0 else "stale" if age > window else "within window"
+    unit = "day" if age == 1 else "days"
+    text = f"Lab {lab_date}, order {order_date}: {age} {unit}, window {window}, {verdict}."
+    return LabRecency(age, verdict, text)
+
+
 # --- rendering: every piece of dynamic text goes through html.escape ---------------------
 
 
@@ -164,8 +189,9 @@ def _quote(text: str) -> str:
     return f'<blockquote style="margin:4px 0 4px 12px;padding-left:8px;border-left:3px solid #999">{_e(text)}</blockquote>'
 
 
-def _evidence_html(report: GapReport) -> str:
+def _evidence_html(report: GapReport, lab_lines: dict[str, str] | None = None) -> str:
     fields = {f.name: f for f in report.fields}
+    lab_lines = lab_lines or {}
     parts = []
     # A conflicting gap already explains itself next to its quotes; show the reason only when it adds something.
     conflicts_explain_it = any(g.reason == "conflicting" for g in report.gaps) and not report.unreadable_passages
@@ -195,7 +221,8 @@ def _evidence_html(report: GapReport) -> str:
     for f in report.fields:
         if f.found and f.quote:
             date = f" (lab date {_e(f.date)})" if f.date else ""
-            rows.append(f"<tr><td>{_e(f.name)}</td><td>found{date}</td><td>{_quote(f.quote)}</td></tr>")
+            recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[f.name])}</div>' if f.name in lab_lines else ""
+            rows.append(f"<tr><td>{_e(f.name)}</td><td>found{date}</td><td>{_quote(f.quote)}{recency}</td></tr>")
         else:
             rows.append(f"<tr><td>{_e(f.name)}</td><td>not found</td><td></td></tr>")
     parts.append("<h4>Evidence for each item</h4><table><tr><th>Item</th><th>Result</th><th>Quote from the note</th></tr>")
@@ -226,6 +253,13 @@ def run_case(
     run = analyze_packet(
         order, form.note, llm=llm, outreach_llm=outreach_llm, audit_path=audit_path, draft=True
     )
+    checklist = lookup_payer_checklist(order.payer_id)
+    lab_items = {item.name for item in checklist.items if item.kind == "lab"}
+    lab_lines = {
+        f.name: lab_recency(f.date, order.order_date, checklist.lab_window_days).text
+        for f in run.report.fields
+        if f.name in lab_items and f.found and f.quote
+    }
     notice = None
     if run.draft_error:
         notice = (
@@ -235,7 +269,7 @@ def run_case(
     return RunView(
         notice=notice,
         status_html=_status_html(run.report),
-        evidence_html=_evidence_html(run.report),
+        evidence_html=_evidence_html(run.report, lab_lines),
         trace=_trace(run, model_label),
         show_draft=run.draft is not None,
         draft_label="Draft request to the care team (not sent)",
