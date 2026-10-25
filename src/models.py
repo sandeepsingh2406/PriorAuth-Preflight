@@ -18,6 +18,12 @@ class ExtractedField(BaseModel):
     conflicting_quotes: list[str] = Field(default_factory=list)
 
 
+class ExtractionResult(BaseModel):
+    """What the Packet Analyst returns: one ExtractedField per requested item."""
+
+    fields: list[ExtractedField]
+
+
 class Gap(BaseModel):
     """A required item that is missing, stale, or backed by conflicting evidence."""
 
