@@ -1,4 +1,6 @@
-"""Shared test setup: unit tests must never reach the network or the real model."""
+"""Shared test setup: unit tests must never reach the network, the real model, or the real audit log."""
+from pathlib import Path
+
 import pytest
 
 
@@ -19,3 +21,9 @@ def _no_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(agents.Runner, "run_sync", _refuse)
     monkeypatch.setattr(agents.Runner, "run", _refuse)
     monkeypatch.setattr(agents.Runner, "run_streamed", _refuse)
+
+
+@pytest.fixture(autouse=True)
+def _isolated_audit_log(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Any audit write that does not pass a path lands in this test's temp folder."""
+    monkeypatch.setenv("AUDIT_LOG_PATH", str(tmp_path / "audit_from_test.jsonl"))

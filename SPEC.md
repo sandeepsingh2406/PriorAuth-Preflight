@@ -70,10 +70,10 @@ Build the single-agent version first. Split only if the single-agent version wor
 
 | Component | Kind | Responsibility |
 | --- | --- | --- |
-| Packet Analyst | Agent | Runs steps 2 to 5, decides the route, produces a `GapReport` |
+| Packet Analyst | Agent + code pipeline | `analyze_packet` (plain code) runs steps 2 to 5 in fixed order, routes with `route`, escalates with `escalate_to_human`, writes one audit line, and returns a `GapReport`. The SDK agent itself has no tools and no handoffs; it is used only inside `extract_fields`. If the model call fails, the packet goes to `NEEDS_REVIEW` with the error type as the reason |
 | Outreach | Agent | Receives only an `OutreachRequest` (the gap list, no `fields`), never the note or quotes from it; drafts the internal request to the ordering provider's care team |
 | `lookup_payer_checklist` | Code | Reads `data/checklists.yaml` |
-| `extract_fields` | LLM, structured output | Reads the note, returns fields with quotes |
+| `extract_fields` | LLM, structured output | Reads the note, returns an `ExtractionResult` (one field per required item, with quotes). Prompts live in `src/prompts.py`. Model from `MODEL_DEV`, or `MODEL_DEMO` when `USE_DEMO_MODEL=true` |
 | `validate_citations` | Code | Verbatim quote check |
 | `check_packet` | Code | Deterministic comparison and recency rules |
 | `write_audit_log` | Code | Appends a JSON line per run |
@@ -81,12 +81,15 @@ Build the single-agent version first. Split only if the single-agent version wor
 
 Rule: the model reads and drafts; code decides and verifies.
 
+Why code runs the pipeline instead of letting the agent call tools: the order of the checks and the status are guarantees, not suggestions. An agent choosing its own tool calls could skip or reorder a check, and the status would have to be recomputed by code anyway. Keeping the model to one structured extraction call makes each run cheaper, testable with the model mocked, and auditable.
+
 Why a handoff: least privilege. The Outreach agent sees only the list of missing items, not the clinical note. A test must prove the note text never reaches it.
 
 `GapReport.fields` carries quotes, which are verbatim excerpts of the note, so the Outreach agent is not given the `GapReport`. Plain code builds an `OutreachRequest` from it (case id, payer id, status, gaps, escalation reason; no `fields`), and that type is the Outreach agent's only input. The person reviewing in the UI still sees the full report with quotes. The test builds a report from a note with distinctive text and asserts that neither the quotes nor any long run of characters from the note appear in what Outreach receives. `check_packet` already keeps quoted note text out of each gap's `detail`.
 
 ## 6. Data models (Pydantic, in `src/models.py`)
 
+- `ExtractionResult`: `fields: list[ExtractedField]`. The structured output of the Packet Analyst.
 - `ExtractedField`: `name`, `value: str | None`, `quote: str | None`, `found: bool`, `date: date | None` (the lab date, used for recency), `conflicting_quotes: list[str]` (other quotes that contradict `quote`; each is validated verbatim like `quote`, and any that survive make the item `conflicting`)
 - `Gap`: `item`, `reason` (`missing` | `stale` | `conflicting`), `detail`
 - `GapReport`: `case_id`, `payer_id`, `status` (`READY` | `NOT_READY` | `NEEDS_REVIEW`), `fields`, `gaps`, `escalation_reason: str | None`
