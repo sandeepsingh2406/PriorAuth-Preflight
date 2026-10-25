@@ -74,11 +74,12 @@ def test_a_newline_inside_a_value_still_makes_one_line(tmp_path: Path) -> None:
 
 
 def test_a_line_holds_only_the_audit_fields(tmp_path: Path) -> None:
-    """The log has the five SPEC fields and nothing else, so there is nowhere for note text."""
+    """The log has the SPEC fields (plus the run id) and nothing else, so there is nowhere for note text."""
     log = tmp_path / "runs.jsonl"
     write_audit_log(_entry(), path=log)
     assert set(json.loads(_lines(log)[0])) == {
         "timestamp",
+        "run_id",
         "case_id",
         "tools_called",
         "status",

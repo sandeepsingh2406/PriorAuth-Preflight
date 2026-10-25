@@ -112,7 +112,8 @@ class AuditEntry(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     timestamp: datetime.datetime
+    run_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")  # links a decision line to its run
     case_id: str
     tools_called: list[str]
     status: Status
-    human_decision: Literal["approved", "edited", "discarded"] | None = None
+    human_decision: Literal["approved", "edited", "discarded", "reviewed"] | None = None

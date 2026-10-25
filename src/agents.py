@@ -4,6 +4,7 @@ Plain code in src/tools.py checks the quotes and makes every decision.
 """
 import datetime
 import os
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -133,6 +134,7 @@ class AnalysisRun:
     raw_unreadable: list[str] = field(default_factory=list)  # unreadable passages as claimed
     draft: Draft | None = None  # the internal request, only for NOT_READY and only when asked
     draft_error: str | None = None  # error type if the Outreach step failed
+    run_id: str = field(default_factory=lambda: uuid.uuid4().hex)  # ties audit lines to this run
 
 
 def _review_reason(gaps: list[Gap]) -> str:
@@ -159,6 +161,7 @@ def analyze_packet(
     Outreach agent from the gap list alone. NEEDS_REVIEW and READY packets never do. If
     the Outreach step fails the analysis stands and only the draft is missing.
     """
+    run_id = uuid.uuid4().hex
     tools_called = ["lookup_payer_checklist"]
     checklist = lookup_payer_checklist(order.payer_id)
 
@@ -173,8 +176,8 @@ def analyze_packet(
             report, f"Extraction failed ({type(error).__name__}); review the note by hand."
         )
         tools_called.append("escalate_to_human")
-        _audit(order, tools_called, report, audit_path)
-        return AnalysisRun(report=report, raw_fields=[], tools_called=tools_called)
+        _audit(order, tools_called, report, audit_path, run_id)
+        return AnalysisRun(report=report, raw_fields=[], tools_called=tools_called, run_id=run_id)
 
     raw_fields = extraction.fields
     tools_called.append("validate_citations")
@@ -210,7 +213,7 @@ def analyze_packet(
             draft_error = type(error).__name__
             tools_called.append("draft_request_failed")
 
-    _audit(order, tools_called, report, audit_path)
+    _audit(order, tools_called, report, audit_path, run_id)
     return AnalysisRun(
         report=report,
         raw_fields=raw_fields,
@@ -218,16 +221,50 @@ def analyze_packet(
         raw_unreadable=list(extraction.unreadable_passages),
         draft=drafted,
         draft_error=draft_error,
+        run_id=run_id,
     )
 
 
-def _audit(order: Order, tools_called: list[str], report: GapReport, path: Path | None) -> None:
+def _audit(
+    order: Order, tools_called: list[str], report: GapReport, path: Path | None, run_id: str
+) -> None:
     write_audit_log(
         AuditEntry(
             timestamp=datetime.datetime.now(datetime.timezone.utc),
+            run_id=run_id,
             case_id=order.case_id,
             tools_called=list(tools_called),
             status=report.status,
         ),
         path=path,
+    )
+
+
+DECISIONS_WITH_DRAFT = ("approved", "edited", "discarded")
+DECISIONS_WITHOUT_DRAFT = ("reviewed",)
+
+
+def record_decision(run: AnalysisRun, decision: str, *, audit_path: Path | None = None) -> None:
+    """Append the person's decision as a second audit line, linked to the run by run_id.
+
+    With a draft on screen the decision is approved, edited or discarded. Without one
+    there is nothing to approve, so the person marks the case reviewed. The log is
+    append-only and holds only the decision, never the text of the note or the draft.
+    A person may decide more than once; the last line for a run id is the final word.
+    """
+    if not isinstance(run, AnalysisRun):
+        raise TypeError("record_decision only accepts an AnalysisRun")
+    allowed = DECISIONS_WITH_DRAFT if run.draft is not None else DECISIONS_WITHOUT_DRAFT
+    if decision not in allowed:
+        raise ValueError(f"The decision must be one of {allowed} for this run, not {decision!r}")
+    write_audit_log(
+        AuditEntry(
+            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            run_id=run.run_id,
+            case_id=run.report.case_id,
+            tools_called=[],
+            status=run.report.status,
+            human_decision=decision,
+        ),
+        path=audit_path,
     )

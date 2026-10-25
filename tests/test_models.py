@@ -141,3 +141,32 @@ def test_extraction_result_and_gap_report_default_to_no_unreadable_passages() ->
     assert ExtractionResult(fields=[]).unreadable_passages == []
     report = GapReport(case_id="c", payer_id="payer_a", status="READY", fields=[], gaps=[])
     assert report.unreadable_passages == []
+
+
+# --- run_id and the decision values -------------------------------------------------
+
+RUN_ID = "0123456789abcdef0123456789abcdef"
+
+
+def _audit_kwargs() -> dict:
+    return dict(timestamp=datetime.datetime(2026, 10, 25, 12, 0), case_id="c", tools_called=[], status="READY")
+
+
+def test_audit_entry_run_id_is_optional_so_older_lines_still_load() -> None:
+    assert AuditEntry(**_audit_kwargs()).run_id is None
+    assert AuditEntry(**_audit_kwargs(), run_id=RUN_ID).run_id == RUN_ID
+
+
+@pytest.mark.parametrize(
+    "bad",
+    ["", "abc", "0123456789ABCDEF0123456789ABCDEF", RUN_ID + "0", "Staging: Stage IIIB (cT3 N2 M0)", "z" * 32],
+)
+def test_audit_entry_run_id_must_be_32_lowercase_hex_characters(bad: str) -> None:
+    """A run id is an identifier, never free text, so note text cannot ride in it."""
+    with pytest.raises(ValidationError):
+        AuditEntry(**_audit_kwargs(), run_id=bad)
+
+
+@pytest.mark.parametrize("decision", ["approved", "edited", "discarded", "reviewed"])
+def test_audit_entry_accepts_the_four_decisions(decision: str) -> None:
+    assert AuditEntry(**_audit_kwargs(), human_decision=decision).human_decision == decision

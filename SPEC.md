@@ -102,7 +102,7 @@ Supporting models (also in `src/models.py`):
 - `ChecklistItem`: `name`, `description`, `kind` (`field` | `lab`). A `lab` item is checked against the payer's recency window.
 - `PayerChecklist`: `payer_id`, `lab_window_days` (> 0), `items`
 - `Order`: `case_id`, `payer_id`, `order_date`, `drug`, `dose`, `schedule`. A lab is stale when `order_date` minus the lab date is greater than the payer's window.
-- `AuditEntry`: `timestamp`, `case_id`, `tools_called`, `status`, `human_decision` (`approved` | `edited` | `discarded` | none). Extra keys are rejected, so note text cannot be written to the log.
+- `AuditEntry`: `timestamp`, `run_id` (32 lowercase hex characters, optional so older lines still load), `case_id`, `tools_called`, `status`, `human_decision` (`approved` | `edited` | `discarded` | `reviewed` | none). Extra keys are rejected, so note text cannot be written to the log.
 
 ## 7. Synthetic data
 
@@ -121,7 +121,7 @@ Supporting models (also in `src/models.py`):
 - Every reported gap or evidence item must carry a validated citation, or be marked not found.
 - The agent abstains and escalates when evidence conflicts or the note is unreadable.
 - The Outreach agent receives the gap list only (an `OutreachRequest`), never the note and never quotes from it.
-- Every run is appended to `audit/runs.jsonl`: timestamp, case id, tools called, status, human decision. The path is `AUDIT_LOG_PATH` if set, else `audit/runs.jsonl` under the project root. The writer accepts only an `AuditEntry` (which rejects extra keys), so note text cannot be logged. It appends one JSON line per run and raises on a write error rather than skipping the line.
+- Every run is appended to `audit/runs.jsonl`: timestamp, run id, case id, tools called, status. The person's decision is a separate, later line with the same `run_id` (written by `record_decision`), so the log stays append-only and decisions link to runs exactly. With a draft on screen the decision is `approved`, `edited` or `discarded`; with no draft there is nothing to approve, so it is `reviewed`. A decision line holds only the decision, never note or draft text. A person may decide more than once; the last line for a `run_id` is the final word. The path is `AUDIT_LOG_PATH` if set, else `audit/runs.jsonl` under the project root. The writer accepts only an `AuditEntry` (which rejects extra keys), so note text cannot be logged. It appends one JSON line per run and raises on a write error rather than skipping the line.
 - Secrets live in `.env` (git-ignored). Never in code, logs, or commits.
 
 ## 9. Evaluation (`eval/run_eval.py`)

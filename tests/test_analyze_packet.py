@@ -322,3 +322,34 @@ def test_default_outreach_path_uses_the_sdk_and_a_blocked_call_is_a_draft_error(
     assert run.draft is None and run.draft_error == "NetworkCallInTest"
     assert len(network_attempts) == 1
     network_attempts.clear()  # expected
+
+
+# --- run_id ----------------------------------------------------------------------
+
+import re  # noqa: E402
+
+RUN_ID_FORMAT = re.compile(r"^[0-9a-f]{32}$")
+
+
+def test_every_run_has_a_run_id_and_its_audit_line_carries_it(tmp_path: Path) -> None:
+    log = tmp_path / "log.jsonl"
+    run = _run(_complete(), log)
+    assert RUN_ID_FORMAT.match(run.run_id)
+    assert _audit(log)[0]["run_id"] == run.run_id
+
+
+def test_run_ids_are_unique_per_run(tmp_path: Path) -> None:
+    log = tmp_path / "log.jsonl"
+    ids = {_run(_complete(), log).run_id for _ in range(5)}
+    assert len(ids) == 5
+    assert {line["run_id"] for line in _audit(log)} == ids
+
+
+def test_a_failed_extraction_still_has_a_run_id_in_its_audit_line(tmp_path: Path) -> None:
+    def broken(prompt: str) -> ExtractionResult:
+        raise RuntimeError("boom")
+
+    log = tmp_path / "log.jsonl"
+    run = analyze_packet(ORDER, NOTE, llm=broken, audit_path=log)
+    assert RUN_ID_FORMAT.match(run.run_id)
+    assert _audit(log)[0]["run_id"] == run.run_id
