@@ -9,7 +9,7 @@ Project: PriorAuth Preflight (repo name `PriorAuth-Preflight`). A prototype that
 3. No tool may submit, email, send, or post anything. Do not add one. The human approval step is the end of the pipeline.
 4. The model reads and drafts. Plain code decides and verifies: checklist lookup, citation validation, gap comparison, and the audit log are deterministic functions with tests.
 5. Every quoted piece of evidence must be validated as a verbatim substring of the note. Unvalidated evidence counts as not found.
-6. The Outreach agent receives the `GapReport` only, never the clinical note. Keep the test that proves this.
+6. The Outreach agent receives only the `OutreachRequest` (the gap list, built by plain code from the `GapReport`), never the clinical note or quotes from it. Keep the test that proves this.
 7. Do not edit `data/labels.json` entries marked `"hand_labeled": true`. Those are the trusted evaluation core.
 8. Stay inside the scope in `SPEC.md`. If a request seems to need something out of scope, stop and ask.
 
