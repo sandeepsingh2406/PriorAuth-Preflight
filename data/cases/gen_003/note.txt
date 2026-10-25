@@ -1,0 +1,23 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Casey Testcase  MRN: SYN-00003
+Visit date: 2026-03-02
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Melanoma, ICD-10 C43.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIB
+
+BIOMARKERS
+BRAF V600E mutation: detected
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-02-24: ANC 1.8, hemoglobin 11.6, platelets 283
+CBC with differential 2026-03-01: ANC 1.8, hemoglobin 10.7, platelets 254 (repeat, different lab)
+
+PLAN
+Start Mocktuzumab 6 mg/kg every 3 weeks.

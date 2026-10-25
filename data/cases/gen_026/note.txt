@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Quinn Mockwell  MRN: SYN-00026
+Visit date: 2026-07-31
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Breast cancer, ICD-10 C50.919. Diagnosis confirmed by biopsy.
+
+BIOMARKERS
+HER2 IHC 3+, positive
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-07-18: ANC 4.3, hemoglobin 10.2, platelets 231
+
+PLAN
+Start Mocktuzumab 6 mg/kg every 3 weeks.

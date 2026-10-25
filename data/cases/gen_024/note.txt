@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Morgan Fakeman  MRN: SYN-00024
+Visit date: 2026-07-22
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Melanoma, ICD-10 C43.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IV
+
+BIOMARKERS
+BRAF V600E mutation: detected
+
+PRIOR THERAPIES
+Fictoplatin plus Examplexed, 4 cycles, best response partial response.
+
+LABS
+CBC with differential 2026-07-08: ANC 1.4, hemoglobin 10.4, platelets 242
+
+PLAN
+Start Fictinib 80 mg once daily.

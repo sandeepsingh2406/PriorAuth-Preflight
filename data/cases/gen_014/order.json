@@ -1,0 +1,8 @@
+{
+  "case_id": "gen_014",
+  "payer_id": "payer_a",
+  "order_date": "2026-09-25",
+  "drug": "Samplestat",
+  "dose": "150 mg",
+  "schedule": "twice daily"
+}

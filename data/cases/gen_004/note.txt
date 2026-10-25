@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Avery Fakeman  MRN: SYN-00004
+Visit date: 2026-02-27
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Colorectal cancer, ICD-10 C18.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIB
+
+BIOMARKERS
+KRAS G12C mutation: detected
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2025-12-21: ANC 1.7, hemoglobin 13.0, platelets 265
+
+PLAN
+Start Fictinib 80 mg once daily.

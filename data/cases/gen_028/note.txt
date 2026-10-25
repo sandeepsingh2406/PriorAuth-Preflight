@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Riley Sampleton  MRN: SYN-00028
+Visit date: 2026-02-08
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Breast cancer, ICD-10 C50.919. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIB
+
+BIOMARKERS
+HER2 IHC 3+, positive
+
+LABS
+CBC with differential 2025-12-28: ANC 4.3, hemoglobin 11.9, platelets 195
+
+PLAN
+Treatment options to be discussed at the next visit.

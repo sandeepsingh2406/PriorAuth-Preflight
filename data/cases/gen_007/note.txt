@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Morgan Fakeman  MRN: SYN-00007
+Visit date: 2026-05-05
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Melanoma, ICD-10 C43.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIA
+
+BIOMARKERS
+BRAF V600E mutation: detected
+
+LABS
+CBC with differential 2026-04-13: ANC 3.3, hemoglobin 9.9, platelets 336
+
+PLAN
+Start Mocktuzumab 6 mg/kg every 3 weeks.

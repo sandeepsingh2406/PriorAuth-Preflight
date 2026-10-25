@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Quinn Fakeman  MRN: SYN-00021
+Visit date: 2026-06-09
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Breast cancer, ICD-10 C50.919. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIB
+
+BIOMARKERS
+HER2 IHC 3+, positive
+
+PRIOR THERAPIES
+Mockorubicin, 6 cycles, best response stable disease.
+
+LABS
+CBC with differential 2026-05-23: ANC 1.6, hemoglobin 10.7, platelets 343
+
+PLAN
+Start Mocktuzumab 6 mg/kg every 3 weeks.

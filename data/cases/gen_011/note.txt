@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Casey Sampleton  MRN: SYN-00011
+Visit date: 2026-05-02
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Colorectal cancer, ICD-10 C18.9. Diagnosis confirmed by biopsy.
+
+BIOMARKERS
+KRAS G12C mutation: detected
+
+PRIOR THERAPIES
+Mockorubicin, 6 cycles, best response stable disease.
+
+LABS
+CBC with differential 2026-04-10: ANC 2.0, hemoglobin 11.0, platelets 296
+
+PLAN
+Start Samplestat 150 mg twice daily.

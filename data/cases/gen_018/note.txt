@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Rowan Testcase  MRN: SYN-00018
+Visit date: 2026-03-04
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Breast cancer, ICD-10 C50.919. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIB
+
+BIOMARKERS
+HER2 IHC 3+, positive
+
+PRIOR THERAPIES
+Fictoplatin plus Examplexed, 4 cycles, best response partial response.
+
+LABS
+CBC with differential 2026-01-28: ANC 2.9, hemoglobin 12.3, platelets 189
+
+PLAN
+Start Samplestat 150 mg twice daily.

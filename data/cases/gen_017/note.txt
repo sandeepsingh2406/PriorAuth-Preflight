@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Avery Placeholder  MRN: SYN-00017
+Visit date: 2026-06-23
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Colorectal cancer, ICD-10 C18.9. Diagnosis confirmed by biopsy.
+
+BIOMARKERS
+KRAS G12C mutation: detected
+
+PRIOR THERAPIES
+Fictoplatin plus Examplexed, 4 cycles, best response partial response.
+
+LABS
+CBC with differential 2026-05-03: ANC 2.9, hemoglobin 10.7, platelets 311
+
+PLAN
+Start Examplumab 200 mg every 21 days.

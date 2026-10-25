@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Avery Testcase  MRN: SYN-00002
+Visit date: 2026-07-24
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Colorectal cancer, ICD-10 C18.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIA
+
+BIOMARKERS
+KRAS G12C mutation: detected
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-07-09: ANC 1.8, hemoglobin 11.7, platelets 311
+
+PLAN
+Start Samplestat 150 mg twice daily.

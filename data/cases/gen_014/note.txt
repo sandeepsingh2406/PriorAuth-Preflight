@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Morgan Sampleton  MRN: SYN-00014
+Visit date: 2026-09-23
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Non-small cell lung cancer, ICD-10 C34.90. Diagnosis confirmed by biopsy.
+
+BIOMARKERS
+EGFR exon 19 deletion: detected
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-09-15: ANC 4.3, hemoglobin 13.2, platelets 156
+
+PLAN
+Start Samplestat 150 mg twice daily.

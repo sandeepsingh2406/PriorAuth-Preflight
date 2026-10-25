@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Avery Demoson  MRN: SYN-00012
+Visit date: 2026-05-02
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Breast cancer, ICD-10 C50.919. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIA
+
+BIOMARKERS
+HER2 IHC 3+, positive
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-02-05: ANC 2.1, hemoglobin 10.3, platelets 371
+
+PLAN
+Start Samplestat 150 mg twice daily.

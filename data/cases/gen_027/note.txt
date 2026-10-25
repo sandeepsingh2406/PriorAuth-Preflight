@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Riley Placeholder  MRN: SYN-00027
+Visit date: 2026-04-14
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Melanoma, ICD-10 C43.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIB
+
+BIOMARKERS
+BRAF V600E mutation: detected
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-03-19: ANC 2.7, hemoglobin 11.7, platelets 305
+
+PLAN
+Start Examplumab 200 mg every 21 days.

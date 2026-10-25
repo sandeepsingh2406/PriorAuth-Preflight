@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Sage Mockwell  MRN: SYN-00008
+Visit date: 2026-08-20
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Non-small cell lung cancer, ICD-10 C34.90. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIA
+
+BIOMARKERS
+EGFR exon 19 deletion: detected
+
+PRIOR THERAPIES
+Fictoplatin plus Examplexed, 4 cycles, best response partial response.
+
+LABS
+CBC with differential 2026-08-18: ANC 3.5, hemoglobin 13.1, platelets 264
+
+PLAN
+Start Fictinib 80 mg once daily.

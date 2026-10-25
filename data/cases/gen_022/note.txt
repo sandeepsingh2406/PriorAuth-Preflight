@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Avery Sampleton  MRN: SYN-00022
+Visit date: 2026-07-04
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Melanoma, ICD-10 C43.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IV
+
+BIOMARKERS
+BRAF V600E mutation: detected
+
+LABS
+CBC with differential 2026-05-30: ANC 3.1, hemoglobin 11.4, platelets 389
+
+PLAN
+Start Examplumab 200 mg every 21 days.

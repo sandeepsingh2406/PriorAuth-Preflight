@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Jordan Sampleton  MRN: SYN-00009
+Visit date: 2026-03-30
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Non-small cell lung cancer, ICD-10 C34.90. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIA
+
+BIOMARKERS
+EGFR exon 19 deletion: detected
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-03-14: ANC 1.3, hemoglobin 9.9, platelets 207
+
+PLAN
+Treatment options to be discussed at the next visit.

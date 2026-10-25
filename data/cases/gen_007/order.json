@@ -1,0 +1,8 @@
+{
+  "case_id": "gen_007",
+  "payer_id": "payer_c",
+  "order_date": "2026-05-07",
+  "drug": "Mocktuzumab",
+  "dose": "6 mg/kg",
+  "schedule": "every 3 weeks"
+}

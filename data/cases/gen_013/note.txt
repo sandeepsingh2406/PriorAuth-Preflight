@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Riley Testcase  MRN: SYN-00013
+Visit date: 2026-06-10
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Breast cancer, ICD-10 C50.919. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIA
+
+BIOMARKERS
+HER2 IHC 3+, positive
+
+PRIOR THERAPIES
+Fictoplatin plus Examplexed, 4 cycles, best response partial response.
+
+LABS
+CBC with differential 2026-0?-?? (date smudged): ANC 3.8, hemoglobin 10.5, platelets 217
+
+PLAN
+Start Examplumab 200 mg every 21 days.

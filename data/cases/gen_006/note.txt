@@ -1,0 +1,23 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Casey Mockwell  MRN: SYN-00006
+Visit date: 2026-06-21
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Non-small cell lung cancer, ICD-10 C34.90. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIB per initial staging.
+Updated imaging report lists Stage IIIA.
+
+BIOMARKERS
+EGFR exon 19 deletion: detected
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-06-11: ANC 2.9, hemoglobin 12.7, platelets 247
+
+PLAN
+Start Samplestat 150 mg twice daily.

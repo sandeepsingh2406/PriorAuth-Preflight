@@ -1,0 +1,8 @@
+{
+  "case_id": "gen_004",
+  "payer_id": "payer_a",
+  "order_date": "2026-02-28",
+  "drug": "Fictinib",
+  "dose": "80 mg",
+  "schedule": "once daily"
+}

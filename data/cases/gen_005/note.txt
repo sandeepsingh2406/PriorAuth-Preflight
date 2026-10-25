@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Casey Demoson  MRN: SYN-00005
+Visit date: 2026-08-12
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Colorectal cancer, ICD-10 C18.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIA
+
+BIOMARKERS
+[scan illegible] EG?R ex@n 1# d%l%tion ?? res_lt: [unreadable]
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2026-07-19: ANC 1.7, hemoglobin 12.6, platelets 287
+
+PLAN
+Start Fictinib 80 mg once daily.

@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Morgan Mockwell  MRN: SYN-00023
+Visit date: 2026-03-23
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Breast cancer, ICD-10 C50.919. Diagnosis confirmed by biopsy.
+
+BIOMARKERS
+HER2 IHC 3+, positive
+
+PRIOR THERAPIES
+Mockorubicin, 6 cycles, best response stable disease.
+
+LABS
+CBC with differential 2026-03-08: ANC 3.3, hemoglobin 12.2, platelets 185
+
+PLAN
+Start Samplestat 150 mg twice daily.

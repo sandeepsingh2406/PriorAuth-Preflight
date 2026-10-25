@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Quinn Mockwell  MRN: SYN-00025
+Visit date: 2026-04-02
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Colorectal cancer, ICD-10 C18.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IV
+
+BIOMARKERS
+KRAS G12C mutation: detected
+
+PRIOR THERAPIES
+Mockorubicin, 6 cycles, best response stable disease.
+
+LABS
+CBC with differential 2026-02-09: ANC 3.6, hemoglobin 12.9, platelets 158
+
+PLAN
+Treatment options to be discussed at the next visit.

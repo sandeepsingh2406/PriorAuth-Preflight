@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Avery Mockwell  MRN: SYN-00010
+Visit date: 2026-05-24
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Breast cancer, ICD-10 C50.919. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIA
+
+BIOMARKERS
+HER2 IHC 3+, positive
+
+LABS
+CBC with differential 2026-04-20: ANC 2.5, hemoglobin 12.7, platelets 290
+
+PLAN
+Start Examplumab 200 mg every 21 days.

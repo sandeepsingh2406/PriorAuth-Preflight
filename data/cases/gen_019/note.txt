@@ -1,0 +1,23 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Quinn Placeholder  MRN: SYN-00019
+Visit date: 2026-08-26
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Colorectal cancer, ICD-10 C18.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIIA
+
+BIOMARKERS
+KRAS G12C mutation: detected
+
+PRIOR THERAPIES
+Mockorubicin, 6 cycles, best response stable disease.
+
+LABS
+CBC with differential 2026-08-12: ANC 3.8, hemoglobin 11.9, platelets 283
+
+PLAN
+Start Mocktuzumab 6 mg/kg every 3 weeks.
+Pharmacy call: dose clarified as 120 mg every 3 weeks.

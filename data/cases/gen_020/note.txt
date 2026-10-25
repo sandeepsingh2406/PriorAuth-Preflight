@@ -1,0 +1,19 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Jordan Sampleton  MRN: SYN-00020
+Visit date: 2026-04-09
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Colorectal cancer, ICD-10 C18.9. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIA
+
+BIOMARKERS
+KRAS G12C mutation: detected
+
+LABS
+CBC with differential 2026-04-03: ANC 4.0, hemoglobin 12.3, platelets 333
+
+PLAN
+Start Fictinib 80 mg once daily.

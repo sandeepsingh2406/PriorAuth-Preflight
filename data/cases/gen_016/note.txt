@@ -1,0 +1,22 @@
+SYNTHETIC NOTE (fictional patient, not real)
+Patient: Casey Fakeman  MRN: SYN-00016
+Visit date: 2026-02-02
+Ordering provider: Dr. Example Provider
+
+DIAGNOSIS
+Non-small cell lung cancer, ICD-10 C34.90. Diagnosis confirmed by biopsy.
+
+STAGE
+Stage IIA
+
+BIOMARKERS
+EGFR exon 19 deletion: detected
+
+PRIOR THERAPIES
+Samplemab, 8 cycles, best response progressive disease.
+
+LABS
+CBC with differential 2025-12-06: ANC 2.2, hemoglobin 12.4, platelets 329
+
+PLAN
+Start Mocktuzumab 6 mg/kg every 3 weeks.
