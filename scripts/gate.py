@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 
 from dotenv import load_dotenv
 
-from src.agents import AnalysisRun, analyze_packet, model_name
+from eval.metrics import CaseResult, GapKey, evaluate_case
+from src.agents import analyze_packet, model_name
 from src.run import ENV_FILE, format_report, load_case
 from src.tools import PROJECT_ROOT, audit_log_path
 
@@ -20,67 +21,12 @@ DEMO_CASES = {"hand_01", "hand_07", "hand_08"}
 MIN_STATUS_MATCHES = 8
 LABELS_PATH = PROJECT_ROOT / "data" / "labels.json"
 
-GapKey = tuple[str, str]
-
-
-@dataclass
-class CaseResult:
-    """How one case compared with its hand label."""
-
-    case_id: str
-    expected_status: str
-    actual_status: str
-    hits: set[GapKey]
-    missed: set[GapKey]
-    extra: set[GapKey]
-    raw_quote_failures: list[str]
-    raw_quotes_total: int
-    final_quotes_verbatim: bool
-
-    @property
-    def status_match(self) -> bool:
-        return self.expected_status == self.actual_status
-
 
 @dataclass
 class GateVerdict:
     passed: bool
     failures: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
-
-
-def _verbatim(quote: str, note: str) -> bool:
-    return quote.strip() != "" and quote in note
-
-
-def evaluate_case(case_id: str, label: dict, note: str, run: AnalysisRun) -> CaseResult:
-    """Compare one run with its label, and check the model's raw quotes against the note."""
-    expected = {(g["item"], g["reason"]) for g in label["expected_gaps"]}
-    actual = {(g.item, g.reason) for g in run.report.gaps}
-
-    claimed = []
-    for f in run.raw_fields:
-        if f.found and f.quote is not None:
-            claimed.append((f.name, f.quote))
-        claimed += [(f.name, q) for q in f.conflicting_quotes]
-    failures = [f"{name}: {quote!r}" for name, quote in claimed if not _verbatim(quote, note)]
-
-    final_ok = all(
-        (f.quote is None or _verbatim(f.quote, note))
-        and all(_verbatim(q, note) for q in f.conflicting_quotes)
-        for f in run.report.fields
-    )
-    return CaseResult(
-        case_id=case_id,
-        expected_status=label["expected_status"],
-        actual_status=run.report.status,
-        hits=expected & actual,
-        missed=expected - actual,
-        extra=actual - expected,
-        raw_quote_failures=failures,
-        raw_quotes_total=len(claimed),
-        final_quotes_verbatim=final_ok,
-    )
 
 
 def gate_verdict(results: list[CaseResult], *, audit_ok: bool) -> GateVerdict:
