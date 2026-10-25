@@ -142,7 +142,7 @@ def _check_item(
             detail=f"The note has {len(field.conflicting_quotes)} conflicting passage(s) about this item.",
         )
     if field is None or not field.found or field.quote is None or not field.quote.strip():
-        return Gap(item=item.name, reason="missing", detail=f"{item.description} is not documented in the note.")
+        return Gap(item=item.name, reason="missing", detail=f"Not documented in the note: {item.description}.")
     if item.kind == "lab":
         return _lab_problem(field, window, order)
     if item.name == PLAN_ITEM:

@@ -376,3 +376,11 @@ def test_validate_then_check_matches_the_hand_labels(case_id: str) -> None:
         (g["item"], g["reason"]) for g in label["expected_gaps"]
     }
     assert route(gaps) == label["expected_status"]
+
+
+def test_missing_gap_text_names_the_item_in_plain_words() -> None:
+    """The reader (and later the Outreach agent) sees which item is missing, not an awkward sentence."""
+    (gap,) = check_packet(
+        _drop(_complete("payer_b"), "prior_therapies"), lookup_payer_checklist("payer_b"), _order("payer_b")
+    )
+    assert gap.detail == "Not documented in the note: Prior therapies tried, with outcomes."
