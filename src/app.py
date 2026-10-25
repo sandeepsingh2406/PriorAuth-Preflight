@@ -9,6 +9,7 @@ Run: uv run python -m src.app   (local only, http://127.0.0.1:7860)
 """
 import datetime
 import html
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -32,6 +33,8 @@ from src.tools import lookup_payer_checklist
 PAYERS = ["payer_a", "payer_b", "payer_c"]
 MAX_NOTE_CHARS = 20_000
 PASTED_CASE_ID = "pasted_note"
+# Only synthetic record numbers are ever carried onto the screen.
+RECORD_NUMBER = re.compile(r"(?:Record number|MRN):\s*(SYN-\d+)")
 APPROVE_LABEL = "Approve draft (logs decision only)"  # it records a decision; nothing is sent
 BANNER = """# PriorAuth Preflight
 
@@ -65,6 +68,8 @@ class Session:
     """One person's current run. Kept in Gradio's per-session state, never in a global."""
 
     run: AnalysisRun
+    subject: str = ""  # the draft as shown (record number swapped in); decisions compare against this
+    body: str = ""
 
 
 @dataclass
@@ -106,6 +111,23 @@ def load_case_into_form(case_id: str) -> CaseForm:
         dose=order.dose,
         schedule=order.schedule,
     )
+
+
+def record_number_from(note: str) -> str | None:
+    """The synthetic record number in the note (SYN-nnnnn), or None. Real-looking numbers are ignored."""
+    match = RECORD_NUMBER.search(note)
+    return match.group(1) if match else None
+
+
+def _show_record_number(text: str, case_id: str, record: str | None) -> str:
+    """Swap the exact case id for the record number in text the person will read.
+
+    This happens after the Outreach model has written the draft: the number comes from the
+    note, so the model never sees it (rule 6). Without a record number the text is unchanged.
+    """
+    if not record:
+        return text
+    return re.sub(rf"(?<![\w-]){re.escape(case_id)}(?![\w-])", lambda _: record, text)
 
 
 def case_id_for(selected: str | None, note: str) -> str:
@@ -309,6 +331,9 @@ def run_case(
             f"The draft could not be written ({run.draft_error}). The gaps below are still valid; "
             "write the request by hand."
         )
+    record = record_number_from(form.note)
+    subject = _show_record_number(run.draft.subject, order.case_id, record) if run.draft else ""
+    body = _show_record_number(run.draft.body, order.case_id, record) if run.draft else ""
     return RunView(
         notice=notice,
         status_html=_status_html(run.report),
@@ -316,10 +341,10 @@ def run_case(
         trace=_trace(run, model_label),
         show_draft=run.draft is not None,
         draft_label="Draft request to the care team (not sent)",
-        subject=run.draft.subject if run.draft else "",
-        body=run.draft.body if run.draft else "",
+        subject=subject,
+        body=body,
         show_reviewed=run.draft is None,
-        session=Session(run=run),
+        session=Session(run=run, subject=subject, body=body),
     )
 
 
@@ -342,7 +367,7 @@ def decide(
             return "Decision recorded: reviewed."
         if draft is None:
             return "A draft was not written for this run, so there is nothing to approve, edit or discard. Use Mark reviewed."
-        changed = subject.strip() != draft.subject or body.strip() != draft.body
+        changed = subject.strip() != (session.subject or draft.subject) or body.strip() != (session.body or draft.body)
         if action == "edit":
             if not changed:
                 return "No changes to record."

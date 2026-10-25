@@ -16,6 +16,7 @@ from src.app import (
     list_cases,
     load_case_into_form,
     main,
+    record_number_from,
     render_requirements,
     run_case,
 )
@@ -594,3 +595,107 @@ def test_the_table_lists_items_in_a_stable_order(tmp_path: Path) -> None:
     html = _table(_run("hand_01", tmp_path).evidence_html)
     names = re.findall(r"<tr><td>(\w+)</td>", html)
     assert names == ["diagnosis", "stage", "biomarker", "prior_therapies", "recent_lab", "treatment_plan"]
+
+
+# --- the record number in the draft ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("note", "expected"),
+    [
+        ("SYNTHETIC NOTE\nRecord number: SYN-90004\nVisit date: 2026-05-08", "SYN-90004"),
+        ("Patient: Riley Placeholder  MRN: SYN-00001\nVisit", "SYN-00001"),
+        ("Record number: SYN-90004\nMRN: SYN-00002", "SYN-90004"),  # the first one wins
+        ("no identifier here", None),
+        ("MRN: 123456789", None),  # only synthetic SYN- numbers are ever carried onto the screen
+        ("Record number: 555-12-3456", None),
+        ("record number: SYN-90004", None),  # the note format is fixed; no guessing
+        ("", None),
+    ],
+)
+def test_record_number_is_read_from_the_note_but_only_if_synthetic(note: str, expected: str | None) -> None:
+    assert record_number_from(note) == expected
+
+
+class RecordingOutreach:
+    """A fake Outreach model that writes the case id into its text, like the real one tends to."""
+
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+
+    def __call__(self, prompt: str) -> DraftText:
+        self.prompts.append(prompt)
+        case_id = re.search(r"case (\S+?),", prompt).group(1)
+        return DraftText(subject=f"Items needed for case {case_id}", body=f"For case {case_id}, please send the listed items. (see {case_id}b too)")
+
+
+def _run_recording(case_id: str, tmp_path: Path, **changes: str):
+    form = _form(case_id, **changes)
+    outreach = RecordingOutreach()
+    view = run_case(form, llm=_extraction(form.note), outreach_llm=outreach, audit_path=tmp_path / "audit.jsonl")
+    return view, outreach
+
+
+def test_the_draft_shown_names_the_record_number_not_the_case_id(tmp_path: Path) -> None:
+    view, _ = _run_recording("hand_04", tmp_path)
+    assert view.subject == "Items needed for case SYN-90004"
+    assert view.body.startswith("For case SYN-90004, please send")
+    assert not re.search(r"(?<![\w-])hand_04(?![\w-])", view.subject + view.body)  # the exact id is gone (hand_04b is a different token)
+
+
+def test_only_the_exact_case_id_is_replaced(tmp_path: Path) -> None:
+    view, _ = _run_recording("hand_04", tmp_path)
+    assert "(see hand_04b too)" in view.body  # a longer token that merely starts with the id is left alone
+
+
+def test_the_outreach_model_never_sees_the_record_number(tmp_path: Path) -> None:
+    """Rule 6: the number comes from the note, so it is swapped in only after the model has written."""
+    view, outreach = _run_recording("hand_04", tmp_path)
+    (prompt,) = outreach.prompts
+    assert "SYN-" not in prompt and "90004" not in prompt
+    assert "hand_04" in prompt  # it still works from the case id
+
+
+def test_without_a_record_number_the_case_id_stays(tmp_path: Path) -> None:
+    _, note = load_case("hand_04")
+    stripped = "\n".join(l for l in note.splitlines() if not l.startswith("Record number"))
+    view, _ = _run_recording("hand_04", tmp_path, note=stripped)
+    assert "pasted_note" in view.subject  # the note changed, so the audit case id is pasted_note, and there is no number to swap in
+
+
+def test_a_real_looking_record_number_is_not_swapped_in(tmp_path: Path) -> None:
+    _, note = load_case("hand_04")
+    real_looking = note.replace("Record number: SYN-90004", "Record number: 4432871")
+    view, _ = _run_recording("hand_04", tmp_path, note=real_looking)
+    assert "4432871" not in view.subject + view.body
+
+
+def test_approving_the_untouched_draft_logs_only_approved(tmp_path: Path) -> None:
+    """The comparison is against the text on screen (with the record number), not the model's original."""
+    view, _ = _run_recording("hand_04", tmp_path)
+    decide(view.session, "approve", view.subject, view.body, audit_path=tmp_path / "audit.jsonl")
+    assert [l["human_decision"] for l in _audit(tmp_path)] == [None, "approved"]
+
+
+def test_edit_with_no_changes_is_still_recognised_after_the_swap(tmp_path: Path) -> None:
+    view, _ = _run_recording("hand_04", tmp_path)
+    assert "no changes" in decide(view.session, "edit", view.subject, view.body, audit_path=tmp_path / "audit.jsonl").lower()
+    assert len(_audit(tmp_path)) == 1
+
+
+def test_changing_the_swapped_text_is_an_edit(tmp_path: Path) -> None:
+    view, _ = _run_recording("hand_04", tmp_path)
+    decide(view.session, "approve", view.subject, view.body + " Thanks!", audit_path=tmp_path / "audit.jsonl")
+    assert [l["human_decision"] for l in _audit(tmp_path)] == [None, "edited", "approved"]
+
+
+def test_the_record_number_never_reaches_the_audit_log(tmp_path: Path) -> None:
+    view, _ = _run_recording("hand_04", tmp_path)
+    decide(view.session, "approve", view.subject, view.body, audit_path=tmp_path / "audit.jsonl")
+    assert "SYN-90004" not in (tmp_path / "audit.jsonl").read_text()
+
+
+def test_the_run_itself_keeps_the_original_draft_for_the_record(tmp_path: Path) -> None:
+    """The model's own text is untouched on the run; only what is shown to the person is swapped."""
+    view, _ = _run_recording("hand_04", tmp_path)
+    assert "hand_04" in view.session.run.draft.subject and "SYN-90004" not in view.session.run.draft.subject
