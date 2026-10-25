@@ -1,0 +1,23 @@
+# Secrets
+.env
+.env.*
+!env.example
+
+# Runtime audit log
+audit/
+
+# Private working notes
+PLAN.md
+NOTES.md
+
+# Personal Claude Code settings
+.claude/settings.local.json
+
+# Python / tooling
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS
+.DS_Store

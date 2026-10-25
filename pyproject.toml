@@ -1,0 +1,17 @@
+[project]
+name = "priorauth-preflight"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic==2.14.1",
+    "pyyaml==6.0.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
