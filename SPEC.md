@@ -79,10 +79,17 @@ Why a handoff: least privilege. The Outreach agent sees only the list of missing
 
 ## 6. Data models (Pydantic, in `src/models.py`)
 
-- `ExtractedField`: `name`, `value: str | None`, `quote: str | None`, `found: bool`
+- `ExtractedField`: `name`, `value: str | None`, `quote: str | None`, `found: bool`, `date: date | None` (the lab date, used for recency), `conflicting_quotes: list[str]` (other quotes that contradict `quote`; each is validated verbatim like `quote`, and any that survive make the item `conflicting`)
 - `Gap`: `item`, `reason` (`missing` | `stale` | `conflicting`), `detail`
 - `GapReport`: `case_id`, `payer_id`, `status` (`READY` | `NOT_READY` | `NEEDS_REVIEW`), `fields`, `gaps`, `escalation_reason: str | None`
 - `Draft`: `subject`, `body`, `requested_items`
+
+Supporting models (also in `src/models.py`):
+
+- `ChecklistItem`: `name`, `description`, `kind` (`field` | `lab`). A `lab` item is checked against the payer's recency window.
+- `PayerChecklist`: `payer_id`, `lab_window_days` (> 0), `items`
+- `Order`: `case_id`, `payer_id`, `order_date`, `drug`, `dose`, `schedule`. A lab is stale when `order_date` minus the lab date is greater than the payer's window.
+- `AuditEntry`: `timestamp`, `case_id`, `tools_called`, `status`, `human_decision` (`approved` | `edited` | `discarded` | none). Extra keys are rejected, so note text cannot be written to the log.
 
 ## 7. Synthetic data
 
