@@ -36,7 +36,7 @@ from src.prompts import (
 )
 def test_extraction_prompt_keeps_each_required_rule(rule: str) -> None:
     """Each rule the extraction must follow is spelled out in the instructions."""
-    assert rule in EXTRACT_FIELDS_INSTRUCTIONS.lower()
+    assert rule in " ".join(EXTRACT_FIELDS_INSTRUCTIONS.lower().split())  # ignores line wrapping
 
 
 @pytest.mark.parametrize(
@@ -45,7 +45,7 @@ def test_extraction_prompt_keeps_each_required_rule(rule: str) -> None:
 )
 def test_packet_analyst_prompt_states_its_limits(rule: str) -> None:
     """The agent is told it only reads and quotes; code decides; it sends nothing."""
-    assert rule in PACKET_ANALYST_INSTRUCTIONS.lower()
+    assert rule in " ".join(PACKET_ANALYST_INSTRUCTIONS.lower().split())  # ignores line wrapping
 
 
 def test_input_template_holds_the_items_and_the_note() -> None:

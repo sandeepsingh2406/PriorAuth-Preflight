@@ -12,16 +12,21 @@ from agents import Agent, Runner
 
 from src.models import (
     AuditEntry,
+    Draft,
+    DraftText,
     ExtractedField,
     ExtractionResult,
     Gap,
     GapReport,
     Order,
+    OutreachRequest,
     PayerChecklist,
 )
 from src.prompts import (
     EXTRACT_FIELDS_INPUT,
     EXTRACT_FIELDS_INSTRUCTIONS,
+    OUTREACH_INPUT,
+    OUTREACH_INSTRUCTIONS,
     PACKET_ANALYST_INSTRUCTIONS,
 )
 from src.tools import (
@@ -36,6 +41,7 @@ from src.tools import (
 
 # Takes the user message, returns the structured extraction. Tests inject a fake.
 ExtractionLLM = Callable[[str], ExtractionResult]
+OutreachLLM = Callable[[str], DraftText]
 
 
 def model_name() -> str:
@@ -77,6 +83,43 @@ def extract_fields(
     if not isinstance(result, ExtractionResult):
         raise TypeError(f"Expected ExtractionResult from the model, got {type(result).__name__}")
     return result
+
+
+def build_outreach_agent() -> Agent:
+    """The Outreach agent: no tools, no handoffs. It only writes a subject and a body."""
+    return Agent(
+        name="Outreach",
+        instructions=OUTREACH_INSTRUCTIONS,
+        model=model_name(),
+        output_type=DraftText,
+    )
+
+
+def _call_outreach_model(prompt: str) -> DraftText:
+    """Run the Outreach agent once through the Agents SDK."""
+    return Runner.run_sync(build_outreach_agent(), prompt).final_output
+
+
+def draft_request(request: OutreachRequest, *, llm: OutreachLLM | None = None) -> Draft:
+    """Draft the internal request to the care team from the gap list alone.
+
+    Only an OutreachRequest is accepted, and only for a NOT_READY packet. The model
+    writes the subject and body; the requested items come from the gaps, not the model.
+    The draft is never sent.
+    """
+    if not isinstance(request, OutreachRequest):
+        raise TypeError("draft_request only accepts an OutreachRequest")
+    if request.status != "NOT_READY":
+        raise ValueError(f"Drafts are only written for NOT_READY packets, not {request.status}")
+    gaps = "\n".join(f"- {gap.item} ({gap.reason}): {gap.detail}" for gap in request.gaps)
+    prompt = OUTREACH_INPUT.format(case_id=request.case_id, payer_id=request.payer_id, gaps=gaps)
+    text = (llm or _call_outreach_model)(prompt)
+    if not isinstance(text, DraftText):
+        raise TypeError(f"Expected DraftText from the model, got {type(text).__name__}")
+    subject, body = text.subject.strip(), text.body.strip()
+    if not subject or not body:
+        raise ValueError("The model returned an empty draft")
+    return Draft(subject=subject, body=body, requested_items=[gap.item for gap in request.gaps])
 
 
 @dataclass
