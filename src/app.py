@@ -9,6 +9,7 @@ Run: uv run python -m src.app   (local only, http://127.0.0.1:7860)
 """
 import datetime
 import html
+import logging
 import re
 import sys
 from dataclasses import dataclass
@@ -26,7 +27,7 @@ from src.agents import (
     model_name,
     record_decision,
 )
-from src.guardrails import check_inputs
+from src.guardrails import COUNTER_JS, check_inputs, counter_html
 from src.models import ChecklistItem, GapReport, Order, PayerChecklist
 from src.run import CASES_DIR, ENV_FILE, load_case
 from src.tools import lookup_payer_checklist
@@ -47,6 +48,10 @@ REQUIREMENTS_LABEL = "📋 Payer requirements"
 ORDER_DATE_LABEL = "📅 Order date (YYYY-MM-DD)"
 TRACE_LABEL = "🧭 Tool-call trace"
 DRAFT_LABEL = "✉️ Draft request to the care team (not sent)"
+SYNTHETIC_BANNER = "Synthetic data only. Do not enter real patient information."
+UNEXPECTED_MESSAGE = "Something went wrong. Please try again."
+
+logger = logging.getLogger("priorauth")  # only ever told an exception's type, never any input
 
 # Colour means what an item does to the status: green fine, amber not ready, red needs a person,
 # gray not applicable, blue neutral. state -> (text colour, background, accent edge).
@@ -109,6 +114,8 @@ def build_css() -> str:
         ".badge{display:inline-block;padding:6px 14px;border-radius:8px;color:#fff;font-weight:700;font-size:1.1em}",
         ".callout{padding:8px 12px;border-radius:8px;margin:6px 0;border-left:5px solid transparent}",
         ".legend{font-size:.9em;opacity:.85;margin:4px 0 8px}",
+        ".char-counter{font-size:.85em;opacity:.85;margin:2px 0 6px}",
+        f".char-over{{background:{PALETTE['bad'][1]};color:{PALETTE['bad'][0]};padding:2px 10px;border-radius:999px;font-weight:700;opacity:1}}",
         ".evidence-table{border-collapse:collapse;width:100%}",
         ".evidence-table td,.evidence-table th{border:1px solid rgba(128,128,128,.35);padding:5px 8px;vertical-align:top;text-align:left}",
     ]
@@ -330,7 +337,7 @@ def decision_callout(message: str) -> str:
     """Colour a message from decide(): green when recorded, red when saving failed, amber otherwise."""
     if message.startswith("Decision recorded"):
         return callout("ok", "✅", message)
-    if "could not be saved" in message:
+    if "could not be saved" in message or message == UNEXPECTED_MESSAGE:
         return callout("bad", "⛔", message)
     return callout("warn", "ℹ️", message)
 
@@ -524,6 +531,30 @@ def decide(
     return "That action is not available."
 
 
+def safe_run_case(form: CaseForm, **kwargs: object) -> RunView:
+    """run_case that never lets an unexpected error reach the person as a stack trace.
+
+    The message is fixed text and the log gets only the exception's type: an exception's own
+    message can contain pieces of the note.
+    """
+    try:
+        return run_case(form, **kwargs)
+    except Exception as error:
+        logger.warning("run failed: %s", type(error).__name__)
+        return RunView(error=UNEXPECTED_MESSAGE)
+
+
+def safe_decide(
+    session: Session | None, action: str, subject: str, body: str, *, audit_path: Path | None = None
+) -> str:
+    """decide() with the same rule: a short plain message, and only the exception type logged."""
+    try:
+        return decide(session, action, subject, body, audit_path=audit_path)
+    except Exception as error:
+        logger.warning("decision failed: %s", type(error).__name__)
+        return UNEXPECTED_MESSAGE
+
+
 # --- the Gradio wiring -----------------------------------------------------------------
 
 
@@ -549,7 +580,9 @@ def build_app(
         with gr.Row():
             with gr.Column(scale=1):
                 case = gr.Dropdown(choices=list_cases(), value=None, label=CASE_LABEL, filterable=True)
+                gr.HTML(callout("warn", "🧪", SYNTHETIC_BANNER))
                 note = gr.Textbox(label=NOTE_LABEL, lines=14, max_lines=30)
+                counter = gr.HTML(value=counter_html(0))
                 payer = gr.Dropdown(choices=PAYERS, value="payer_a", label=PAYER_LABEL)
                 with gr.Accordion(REQUIREMENTS_LABEL, open=False):
                     requirements = gr.HTML(value=render_requirements("payer_a"))
@@ -585,7 +618,7 @@ def build_app(
                 case_id=case_id or "", note=note_text or "", payer_id=payer_id or "",
                 order_date=date_text or "", drug=drug_text or "", dose=dose_text or "", schedule=schedule_text or "",
             )
-            view = run_case(form, llm=llm, outreach_llm=outreach_llm, audit_path=audit_path, model_label=model_label)
+            view = safe_run_case(form, llm=llm, outreach_llm=outreach_llm, audit_path=audit_path, model_label=model_label)
             return (
                 view.session,
                 view.status_html,
@@ -601,12 +634,14 @@ def build_app(
 
         def make_decider(action: str):
             def on_decision(current, subject_text, body_text):
-                message = decide(current, action, subject_text or "", body_text or "", audit_path=audit_path)
+                message = safe_decide(current, action, subject_text or "", body_text or "", audit_path=audit_path)
                 return decision_callout(message)
 
             return on_decision
 
         case.change(on_case_change, inputs=case, outputs=[note, payer, order_date, drug, dose, schedule])
+        # Browser-only: counts as you type (and when a case fills the box) with no server request.
+        note.change(None, inputs=note, outputs=counter, js=COUNTER_JS, show_progress="hidden")
         payer.change(render_requirements, inputs=payer, outputs=requirements)
         run_button.click(
             on_run,

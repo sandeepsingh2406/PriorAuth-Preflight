@@ -12,17 +12,22 @@ from src.app import (
     DISCARD_LABEL,
     EDIT_LABEL,
     PALETTE,
+    NOTE_LABEL,
     PAYER_LABEL,
     REQUIREMENTS_LABEL,
     REVIEWED_LABEL,
     RUN_LABEL,
     SOLID,
+    SYNTHETIC_BANNER,
+    UNEXPECTED_MESSAGE,
     CaseForm,
     _notice_html,
     build_css,
     build_theme,
     callout,
     decision_callout,
+    safe_decide,
+    safe_run_case,
     build_app,
     case_id_for,
     decide,
@@ -1214,3 +1219,111 @@ def test_the_old_20000_character_allowance_is_gone() -> None:
     import src.app as app_module
 
     assert not hasattr(app_module, "MAX_NOTE_CHARS") or app_module.MAX_NOTE_CHARS == 2000
+
+
+# --- the live counter, the synthetic-data banner and safe errors -----------------------------------
+
+
+def _demo():
+    return build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
+
+
+def _note_box(demo):
+    import gradio as gr
+
+    return next(b for b in demo.blocks.values() if isinstance(b, gr.Textbox) and b.label == NOTE_LABEL)
+
+
+def test_the_note_box_has_a_live_counter_that_runs_in_the_browser() -> None:
+    from src.guardrails import COUNTER_JS, counter_html
+
+    demo = _demo()
+    note = _note_box(demo)
+    deps = [d for d in demo.config["dependencies"] if (note._id, "change") in [tuple(t) for t in d["targets"]]]
+    counter_deps = [d for d in deps if d["js"] == COUNTER_JS]
+    assert len(counter_deps) == 1
+    assert counter_deps[0]["backend_fn"] is False  # no server round trip per keystroke
+    assert counter_html(0) in {getattr(b, "value", None) for b in demo.blocks.values()}
+
+
+def test_the_note_box_does_not_silently_cut_pasted_text() -> None:
+    """A hard max_length would truncate a paste and hide the 'too long' message."""
+    assert _note_box(_demo()).max_length is None
+
+
+def test_the_synthetic_data_banner_sits_in_the_same_column_just_above_the_note_box() -> None:
+    import gradio as gr
+
+    demo = _demo()
+    note = _note_box(demo)
+    banners = [b for b in demo.blocks.values() if isinstance(b, gr.HTML) and SYNTHETIC_BANNER in (b.value or "")]
+    assert len(banners) == 1
+
+    def column_of(block):  # Gradio wraps form inputs in an invisible Form inside the column
+        while not isinstance(block, gr.Column):
+            block = block.parent
+        return block
+
+    assert column_of(banners[0]) is column_of(note)  # next to the note box, not elsewhere on the page
+    assert banners[0]._id < note._id  # and above it
+    assert SYNTHETIC_BANNER == "Synthetic data only. Do not enter real patient information."
+
+
+def test_the_css_styles_the_counter_and_marks_over_the_limit_in_red() -> None:
+    css = build_css()
+    assert ".char-counter" in css and ".char-over" in css
+    bad_text, bad_bg, _ = PALETTE["bad"]
+    over = re.search(r"\.char-over\{([^}]*)\}", css).group(1)
+    assert bad_text in over and bad_bg in over
+
+
+def test_an_unexpected_error_becomes_one_short_plain_message(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+    import logging
+
+    secret = "SECRET NOTE TEXT: Stage IV <script>"
+
+    def boom(*args: object, **kwargs: object):
+        raise ValueError(secret)
+
+    monkeypatch.setattr("src.app.analyze_packet", boom)
+    with caplog.at_level(logging.DEBUG):
+        view = safe_run_case(_form("hand_01"), llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    assert view.error == UNEXPECTED_MESSAGE == "Something went wrong. Please try again."
+    assert view.session is None
+    for forbidden in [secret, "ValueError", "Traceback", 'File "', "boom"]:
+        assert forbidden not in (view.error or "")
+    assert [r.getMessage() for r in caplog.records if r.name == "priorauth"] == ["run failed: ValueError"]
+    assert secret not in caplog.text
+
+
+def test_safe_run_still_returns_the_normal_result_when_nothing_goes_wrong(tmp_path: Path) -> None:
+    form = _form("hand_01")
+    view = safe_run_case(form, llm=_extraction(form.note), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    assert view.error is None and view.session is not None
+
+
+def test_an_unexpected_error_while_recording_a_decision_is_also_short_and_red(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+    view = _run("hand_07", tmp_path)
+
+    def boom(*args: object, **kwargs: object):
+        raise RuntimeError("SECRET draft text")
+
+    monkeypatch.setattr("src.app.record_decision", boom)
+    message = safe_decide(view.session, "discard", view.subject, view.body, audit_path=tmp_path / "audit.jsonl")
+    assert message == UNEXPECTED_MESSAGE
+    assert "SECRET" not in caplog.text and "SECRET" not in message
+    assert "callout-bad" in decision_callout(message)
+
+
+def test_errors_are_never_shown_with_a_traceback_by_the_server() -> None:
+    """show_error=False keeps Gradio itself from displaying exception details."""
+    import gradio as gr
+
+    captured: dict = {}
+    original = gr.Blocks.launch
+    try:
+        gr.Blocks.launch = lambda self, **kwargs: captured.update(kwargs)  # type: ignore[method-assign]
+        main(env_file=None, llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
+    finally:
+        gr.Blocks.launch = original  # type: ignore[method-assign]
+    assert captured["show_error"] is False
