@@ -12,10 +12,12 @@ import html
 import logging
 import re
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
 import gradio as gr
+from agents import set_tracing_disabled
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
@@ -27,7 +29,15 @@ from src.agents import (
     model_name,
     record_decision,
 )
-from src.guardrails import COUNTER_JS, check_inputs, counter_html
+from src.guardrails import (
+    COUNTER_JS,
+    DEMO_CONCURRENCY,
+    RunLimiter,
+    check_inputs,
+    counter_html,
+    daily_cap,
+    demo_mode,
+)
 from src.models import ChecklistItem, GapReport, Order, PayerChecklist
 from src.run import CASES_DIR, ENV_FILE, load_case
 from src.tools import lookup_payer_checklist
@@ -555,6 +565,42 @@ def safe_decide(
         return UNEXPECTED_MESSAGE
 
 
+def make_limiter(demo: bool, env: dict[str, str] | None = None) -> RunLimiter | None:
+    """The run caps exist only in DEMO_MODE; DAILY_RUN_CAP sets the daily one."""
+    return RunLimiter(daily_cap=daily_cap(env)) if demo else None
+
+
+def resolve_audit_path(demo: bool, audit_path: Path | None) -> Path | None:
+    """An explicit path wins. In DEMO_MODE the log goes to a fresh temp folder, never the project."""
+    if audit_path is not None:
+        return audit_path
+    return Path(tempfile.mkdtemp(prefix="priorauth_")) / "audit.jsonl" if demo else None
+
+
+def run_with_limits(
+    form: CaseForm, usage_runs: int, *, limiter: RunLimiter | None = None, **kwargs: object
+) -> tuple[RunView, int]:
+    """Validate, check the caps, then run. Returns the view and this session's new run count.
+
+    Invalid input is refused first and never uses up a run. When a cap is hit the person gets a
+    friendly notice and the model is not called. A run is counted as soon as it is allowed, so
+    a model call that fails still counts (it may have been billed).
+    """
+    try:
+        _, problem = _to_order(form)
+    except Exception as error:
+        logger.warning("run failed: %s", type(error).__name__)
+        return RunView(error=UNEXPECTED_MESSAGE), usage_runs
+    if problem:
+        return RunView(error=problem), usage_runs
+    if limiter is not None:
+        allowed, message = limiter.try_start(usage_runs)
+        if not allowed:
+            return RunView(notice=message), usage_runs
+        usage_runs += 1
+    return safe_run_case(form, **kwargs), usage_runs
+
+
 # --- the Gradio wiring -----------------------------------------------------------------
 
 
@@ -572,11 +618,23 @@ def build_app(
     outreach_llm: OutreachLLM | None = None,
     audit_path: Path | None = None,
     model_label: str = "not shown",
+    demo: bool | None = None,
+    limiter: RunLimiter | None = None,
 ) -> gr.Blocks:
-    """Build the screen. Models and the audit path can be injected for tests."""
-    with gr.Blocks(title="PriorAuth Preflight", analytics_enabled=False) as demo:
+    """Build the screen. Models, the audit path and the DEMO_MODE caps can be injected for tests.
+
+    DEMO_MODE (from the environment unless given) adds the run caps, a queue limit of 2, a temp
+    audit path, and switches SDK tracing off so no note text leaves for a tracing service.
+    """
+    demo = demo_mode() if demo is None else demo
+    limiter = limiter if limiter is not None else make_limiter(demo)
+    audit_path = resolve_audit_path(demo, audit_path)
+    if demo:
+        set_tracing_disabled(True)
+    with gr.Blocks(title="PriorAuth Preflight", analytics_enabled=False) as page:
         gr.Markdown(BANNER)
         session = gr.State(None)
+        usage = gr.State(0)  # runs used in this session
         with gr.Row():
             with gr.Column(scale=1):
                 case = gr.Dropdown(choices=list_cases(), value=None, label=CASE_LABEL, filterable=True)
@@ -613,12 +671,15 @@ def build_app(
             form = load_case_into_form(case_id)
             return form.note, form.payer_id, form.order_date, form.drug, form.dose, form.schedule
 
-        def on_run(case_id, note_text, payer_id, date_text, drug_text, dose_text, schedule_text):
+        def on_run(case_id, note_text, payer_id, date_text, drug_text, dose_text, schedule_text, usage_runs=0):
             form = CaseForm(
                 case_id=case_id or "", note=note_text or "", payer_id=payer_id or "",
                 order_date=date_text or "", drug=drug_text or "", dose=dose_text or "", schedule=schedule_text or "",
             )
-            view = safe_run_case(form, llm=llm, outreach_llm=outreach_llm, audit_path=audit_path, model_label=model_label)
+            view, used = run_with_limits(
+                form, usage_runs or 0, limiter=limiter, llm=llm, outreach_llm=outreach_llm,
+                audit_path=audit_path, model_label=model_label,
+            )
             return (
                 view.session,
                 view.status_html,
@@ -630,6 +691,7 @@ def build_app(
                 gr.update(visible=view.show_reviewed),
                 view.trace,
                 "",
+                used,
             )
 
         def make_decider(action: str):
@@ -645,13 +707,14 @@ def build_app(
         payer.change(render_requirements, inputs=payer, outputs=requirements)
         run_button.click(
             on_run,
-            inputs=[case, note, payer, order_date, drug, dose, schedule],
-            outputs=[session, status, notice, evidence, draft_group, subject, body, reviewed, trace, decision],
+            inputs=[case, note, payer, order_date, drug, dose, schedule, usage],
+            outputs=[session, status, notice, evidence, draft_group, subject, body, reviewed, trace, decision, usage],
         )
         for button, action in [(approve, "approve"), (edit, "edit"), (discard, "discard")]:
             button.click(make_decider(action), inputs=[session, subject, body], outputs=decision)
         reviewed.click(make_decider("reviewed"), inputs=[session, subject, body], outputs=decision)
-    return demo
+    page.queue(default_concurrency_limit=DEMO_CONCURRENCY if demo else 1)
+    return page
 
 
 def main(
@@ -669,7 +732,6 @@ def main(
         print(f"error: {error}", file=sys.stderr)
         return 2
     demo = build_app(llm=llm, outreach_llm=outreach_llm, model_label=label)
-    demo.queue(default_concurrency_limit=1)
     demo.launch(
         server_name="127.0.0.1", share=False, show_error=False, inbrowser=False, css=build_css(), theme=build_theme()
     )
