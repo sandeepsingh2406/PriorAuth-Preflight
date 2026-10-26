@@ -13,6 +13,10 @@ SESSION_RUN_CAP = 10
 DEFAULT_DAILY_CAP = 200
 DEMO_CONCURRENCY = 2
 
+# The extraction prompt wraps the note between these two markers. A note containing them could pretend
+# the note has ended and then add instructions of its own, so such a note is refused.
+RESERVED_MARKERS = ("<<<NOTE", "NOTE>>>")
+
 ISO_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")  # ASCII digits only
 DATE_MESSAGE = "Enter the order date as YYYY-MM-DD."
 
@@ -40,6 +44,8 @@ def check_inputs(
         return f"The note is too long: {len(note):,} characters (limit {MAX_NOTE_CHARS:,})."
     if not note.strip():
         return "Paste or choose a note first."
+    if any(marker in note for marker in RESERVED_MARKERS):
+        return "The note contains reserved text (<<<NOTE or NOTE>>>) that this tool uses internally. Please remove it."
     if payer_id not in payers:
         return "Choose a payer from the list."
     date_text = _text(order_date).strip()
