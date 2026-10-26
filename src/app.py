@@ -7,6 +7,7 @@ tested without a browser; build_app only wires them to Gradio components.
 
 Run: uv run python -m src.app   (local only, http://127.0.0.1:7860)
 """
+import argparse
 import datetime
 import html
 import logging
@@ -37,6 +38,7 @@ from src.guardrails import (
     counter_html,
     daily_cap,
     demo_mode,
+    share_requested,
 )
 from src.models import ChecklistItem, GapReport, Order, PayerChecklist
 from src.run import CASES_DIR, ENV_FILE, load_case
@@ -717,26 +719,46 @@ def build_app(
     return page
 
 
+SHARE_REMINDER = (
+    "A temporary public link is on. Anyone with it can use this app and spend your model key "
+    "(runs are capped by DEMO_MODE). Stop the app (Ctrl+C) as soon as you are done."
+)
+
+
 def main(
+    argv: list[str] | None = None,
     *,
     env_file: Path | None = ENV_FILE,
     llm: ExtractionLLM | None = None,
     outreach_llm: OutreachLLM | None = None,
 ) -> int:
-    """Start the app on this computer only. Exit code 2 if no model is configured."""
+    """Start the app on this computer only, or with --share (or SHARE=1) a temporary public link.
+
+    A public link is refused unless DEMO_MODE=1, so the run caps are on. Exit code 2 if it is
+    refused or no model is configured.
+    """
+    parser = argparse.ArgumentParser(prog="python -m src.app")
+    parser.add_argument("--share", action="store_true", help="temporary public link; needs DEMO_MODE=1")
+    options = parser.parse_args(argv or [])
     if env_file is not None:
         load_dotenv(env_file)
+    share = options.share or share_requested()
+    if share and not demo_mode():
+        print("error: a public link needs DEMO_MODE=1 (it turns the run caps on). Not started.", file=sys.stderr)
+        return 2
     try:
         label = "test-llm" if llm is not None else model_name()
     except RuntimeError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     demo = build_app(llm=llm, outreach_llm=outreach_llm, model_label=label)
+    if share:
+        print(SHARE_REMINDER)
     demo.launch(
-        server_name="127.0.0.1", share=False, show_error=False, inbrowser=False, css=build_css(), theme=build_theme()
+        server_name="127.0.0.1", share=share, show_error=False, inbrowser=False, css=build_css(), theme=build_theme()
     )
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

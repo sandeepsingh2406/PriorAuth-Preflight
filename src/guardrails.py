@@ -77,6 +77,12 @@ def demo_mode(env: Mapping[str, str] | None = None) -> bool:
     return source.get("DEMO_MODE", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def share_requested(env: Mapping[str, str] | None = None) -> bool:
+    """SHARE asks for a temporary public link. Off unless clearly switched on."""
+    source = os.environ if env is None else env
+    return source.get("SHARE", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def daily_cap(env: Mapping[str, str] | None = None) -> int:
     """DAILY_RUN_CAP as a whole number of runs; anything unclear falls back to the default."""
     source = os.environ if env is None else env

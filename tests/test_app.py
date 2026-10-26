@@ -1327,3 +1327,88 @@ def test_errors_are_never_shown_with_a_traceback_by_the_server() -> None:
     finally:
         gr.Blocks.launch = original  # type: ignore[method-assign]
     assert captured["show_error"] is False
+
+
+# --- the optional share link (--share / SHARE=1) ---------------------------------------------------
+
+
+@pytest.fixture
+def launched(monkeypatch: pytest.MonkeyPatch):
+    """Capture launch() arguments instead of starting a server; put the tracing switch back afterwards."""
+    import gradio as gr
+    from agents.tracing import get_trace_provider
+
+    provider = get_trace_provider()
+    saved = (provider._manual_disabled, provider._disabled)
+    captured: dict = {}
+    monkeypatch.setattr(gr.Blocks, "launch", lambda self, **kwargs: captured.update(kwargs))
+    for name in ("SHARE", "DEMO_MODE"):
+        monkeypatch.delenv(name, raising=False)
+    yield captured
+    provider._manual_disabled, provider._disabled = saved
+
+
+def _start(argv: list[str] | None = None) -> int:
+    return main(argv=argv, env_file=None, llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
+
+
+@pytest.mark.parametrize("how", ["flag", "env"])
+def test_share_refuses_to_start_without_demo_mode(
+    how: str, launched: dict, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    if how == "env":
+        monkeypatch.setenv("SHARE", "1")
+    assert _start(["--share"] if how == "flag" else []) == 2
+    assert "DEMO_MODE=1" in capsys.readouterr().err
+    assert launched == {}  # nothing was started, so no link exists
+
+
+@pytest.mark.parametrize("how", ["flag", "env"])
+def test_share_with_demo_mode_shares_and_reminds_to_stop(
+    how: str, launched: dict, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("DEMO_MODE", "1")
+    if how == "env":
+        monkeypatch.setenv("SHARE", "1")
+    assert _start(["--share"] if how == "flag" else []) == 0
+    assert launched["share"] is True and launched["server_name"] == "127.0.0.1"
+    out = capsys.readouterr().out.lower()
+    assert "public link" in out and "stop" in out
+
+
+@pytest.mark.parametrize("value", ["", "0", "false", "no", "off", "maybe"])
+def test_without_the_flag_or_with_an_unclear_value_nothing_is_shared(
+    value: str, launched: dict, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("DEMO_MODE", "1")
+    monkeypatch.setenv("SHARE", value)
+    assert _start() == 0
+    assert launched["share"] is False
+    assert "public link" not in capsys.readouterr().out.lower()
+
+
+def test_demo_mode_alone_does_not_share(launched: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEMO_MODE", "1")
+    assert _start() == 0 and launched["share"] is False
+
+
+def test_a_shared_run_has_the_demo_caps_on(launched: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A public link is only allowed with the run caps on: the queue limit is the visible sign."""
+    import gradio as gr
+
+    built: list = []
+    real = gr.Blocks.launch
+    monkeypatch.setattr(gr.Blocks, "launch", lambda self, **kwargs: (built.append(self), launched.update(kwargs))[1])
+    monkeypatch.setenv("DEMO_MODE", "1")
+    assert _start(["--share"]) == 0
+    assert built[0]._queue.default_concurrency_limit == 2
+    assert gr.Blocks.launch is not real
+
+
+def test_the_refusal_comes_before_the_model_is_looked_up(
+    launched: dict, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("MODEL_DEV", raising=False)
+    assert main(argv=["--share"], env_file=None) == 2
+    err = capsys.readouterr().err
+    assert "DEMO_MODE=1" in err and "MODEL_DEV" not in err

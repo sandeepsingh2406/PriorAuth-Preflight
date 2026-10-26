@@ -31,7 +31,7 @@ uv run python scripts/gen_cases.py         # regenerate the seeded synthetic cas
 
 `.env` is git-ignored and keys are read from environment variables only. Model names come from
 `MODEL_DEV` and `MODEL_DEMO` (set `USE_DEMO_MODEL=true` to use the second). The app listens on
-this computer only.
+this computer only. For a temporary public link, run it with `DEMO_MODE=1 uv run python -m src.app --share` and stop it when you are done.
 
 ## What is in the repo
 
