@@ -23,6 +23,7 @@ from src.app import (
     decide,
     lab_recency,
     list_cases,
+    pill,
     load_case_into_form,
     main,
     record_number_from,
@@ -558,7 +559,13 @@ def _table(html: str) -> str:
 
 
 def _row(html: str, item: str) -> str:
-    return next(r for r in _table(html).split("<tr>") if f"<td>{item}</td>" in r)
+    return next(r for r in _table(html).split("<tr") if f"<td>{item}</td>" in r)
+
+
+def _text(cell: str) -> str:
+    """A table cell as a reader sees it: icons and markup removed, words kept."""
+    cell = re.sub(r'<span class="icon"[^>]*>.*?</span>', "", cell)
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", cell)).strip()
 
 
 def test_every_row_is_marked_required_or_not_for_the_payer(tmp_path: Path) -> None:
@@ -579,7 +586,7 @@ def test_stage_is_not_required_for_payer_c(tmp_path: Path) -> None:
 def test_payer_b_requires_all_six_items(tmp_path: Path) -> None:
     html = _run("hand_05", tmp_path).evidence_html
     assert "Not required" not in html
-    assert len(re.findall(r"<td>Required</td>", html)) == 6
+    assert len(re.findall(r'pill-info"><span class="icon" aria-hidden="true">[^<]*</span>Required</span>', html)) == 6
 
 
 def test_a_required_item_the_model_left_out_shows_as_required_and_not_found(tmp_path: Path) -> None:
@@ -597,14 +604,14 @@ def test_when_the_model_fails_required_items_say_not_checked_rather_than_not_fou
 
     view = run_case(_form("hand_01"), llm=broken, outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
     html = view.evidence_html
-    assert "not found" not in html
+    assert "not found" not in html.split("<table")[1]  # the legend names it; no row may claim it
     assert "not checked" in _row(html, "stage")
     assert "Required" in _row(html, "stage")
 
 
 def test_the_table_lists_items_in_a_stable_order(tmp_path: Path) -> None:
     html = _table(_run("hand_01", tmp_path).evidence_html)
-    names = re.findall(r"<tr><td>(\w+)</td>", html)
+    names = re.findall(r'<tr class="row-\w+"><td>(\w+)</td>', html)
     assert names == ["diagnosis", "stage", "biomarker", "prior_therapies", "recent_lab", "treatment_plan"]
 
 
@@ -722,22 +729,22 @@ def _cells(row: str) -> list[str]:
 def test_a_conflicting_item_says_conflicting_and_shows_both_quotes_in_its_row(tmp_path: Path) -> None:
     html = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
     cells = _cells(_row(html, "stage"))
-    assert cells[1] == "Required" and cells[2] == "conflicting"
+    assert _text(cells[1]) == "Required" and _text(cells[2]) == "conflicting"
     assert "Staging: Stage II (cT2 N0 M0)" in cells[3]
     assert "stage IV non-small cell lung cancer" in cells[3]
 
 
 def test_items_without_a_conflict_still_say_found(tmp_path: Path) -> None:
     html = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
-    assert _cells(_row(html, "diagnosis"))[2] == "found"
-    assert _cells(_row(html, "treatment_plan"))[2] == "found"
+    assert _text(_cells(_row(html, "diagnosis"))[2]) == "found"
+    assert _text(_cells(_row(html, "treatment_plan"))[2]) == "found"
 
 
 def test_a_conflicting_lab_keeps_its_recency_line(tmp_path: Path) -> None:
     other = "WBC 6.1, hemoglobin 12.4, platelets 214, creatinine 0.9."  # really in the note, so it survives validation
     html = _run("hand_01", tmp_path, conflicts={"recent_lab": [other]}).evidence_html
     cells = _cells(_row(html, "recent_lab"))
-    assert cells[2] == "conflicting"
+    assert _text(cells[2]) == "conflicting"
     assert other in cells[3]
     assert "Lab 2026-04-22, order 2026-05-04: 12 days, window 30, within window." in cells[3]
 
@@ -747,7 +754,7 @@ def test_a_lab_with_no_date_is_marked_conflicting_with_the_reason(tmp_path: Path
     fields = [f.model_copy(update={"date": None}) if f.name == "recent_lab" else f for f in _extraction(note)(None).fields]
     view = run_case(_form("hand_01"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
     cells = _cells(_row(view.evidence_html, "recent_lab"))
-    assert cells[2] == "conflicting" and "Lab date missing or unreadable." in cells[3]
+    assert _text(cells[2]) == "conflicting" and "Lab date missing or unreadable." in cells[3]
 
 
 def test_a_failed_main_quote_does_not_hide_a_real_conflicting_quote(tmp_path: Path) -> None:
@@ -761,7 +768,7 @@ def test_a_failed_main_quote_does_not_hide_a_real_conflicting_quote(tmp_path: Pa
     ]
     view = run_case(_form("hand_08"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
     cells = _cells(_row(view.evidence_html, "stage"))
-    assert cells[2] == "conflicting"
+    assert _text(cells[2]) == "conflicting"
     assert real in cells[3] and "Stage IX per nobody" not in cells[3]
 
 
@@ -857,3 +864,92 @@ def test_the_theme_is_the_soft_indigo_one() -> None:
     import gradio as gr
 
     assert isinstance(build_theme(), gr.themes.Soft)
+
+
+# --- pills, status badges and coloured rows ---------------------------------------------------------
+
+
+def test_a_pill_is_an_icon_plus_its_words() -> None:
+    assert pill("ok", "✅", "found") == '<span class="pill pill-ok"><span class="icon" aria-hidden="true">✅</span>found</span>'
+
+
+def test_a_pill_only_accepts_a_known_colour_state() -> None:
+    """Class names come from the fixed palette, never from anything typed or read from a note."""
+    with pytest.raises(ValueError):
+        pill('ok"><script>', "✅", "found")
+
+
+def test_pill_text_is_escaped() -> None:
+    assert "<b>" not in pill("info", "📌", "<b>x</b>") and "&lt;b&gt;" in pill("info", "📌", "<b>x</b>")
+
+
+@pytest.mark.parametrize(
+    ("case_id", "conflicts", "status", "badge"),
+    [
+        ("hand_01", None, "READY", "badge-ready"),
+        ("hand_07", None, "NOT_READY", "badge-not_ready"),
+        ("hand_08", {"stage": ["stage IV non-small cell lung cancer"]}, "NEEDS_REVIEW", "badge-needs_review"),
+    ],
+)
+def test_each_status_has_its_own_badge_with_an_icon_and_the_words(tmp_path: Path, case_id: str, conflicts, status: str, badge: str) -> None:
+    html = _run(case_id, tmp_path, conflicts=conflicts).status_html
+    assert f'class="badge {badge}"' in html
+    assert status in _text(html)
+    assert 'class="icon" aria-hidden="true"' in html
+
+
+def _result_pill(html: str, item: str) -> tuple[str, str]:
+    cell = _cells(_row(html, item))[2]
+    state = re.search(r"pill-(\w+)", cell).group(1)
+    return state, _text(cell)
+
+
+def test_found_is_green_not_found_is_amber_conflicting_is_red_not_checked_is_gray(tmp_path: Path) -> None:
+    conflict = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
+    assert _result_pill(conflict, "diagnosis") == ("ok", "found")
+    assert _result_pill(conflict, "stage") == ("bad", "conflicting")
+    assert _result_pill(conflict, "prior_therapies") == ("muted", "not checked")  # payer_a does not ask for it
+    missing = _run("hand_07", tmp_path).evidence_html
+    assert _result_pill(missing, "biomarker") == ("warn", "not found")
+    assert _result_pill(missing, "prior_therapies") == ("warn", "not found")
+
+
+def test_rows_carry_the_colour_of_their_state(tmp_path: Path) -> None:
+    html = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
+    row_class = lambda item: re.search(r'class="(row-\w+)"', _row(html, item)).group(1)
+    assert (row_class("diagnosis"), row_class("stage"), row_class("prior_therapies")) == ("row-ok", "row-bad", "row-muted")
+    assert set(re.findall(r'class="(row-\w+)"', html)) <= {f"row-{s}" for s in PALETTE}
+
+
+def test_required_is_blue_and_not_required_is_gray(tmp_path: Path) -> None:
+    html = _run("hand_01", tmp_path).evidence_html  # payer_a
+    required = _cells(_row(html, "diagnosis"))[1]
+    not_required = _cells(_row(html, "prior_therapies"))[1]
+    assert "pill-info" in required and _text(required) == "Required"
+    assert "pill-muted" in not_required and _text(not_required) == "Not required by this payer"
+
+
+def test_after_a_model_failure_required_rows_are_gray_not_checked(tmp_path: Path) -> None:
+    def broken(prompt: str) -> ExtractionResult:
+        raise RuntimeError("boom")
+
+    html = run_case(_form("hand_01"), llm=broken, outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl").evidence_html
+    assert _result_pill(html, "stage") == ("muted", "not checked")
+
+
+def test_a_legend_explains_every_state_once(tmp_path: Path) -> None:
+    html = _run("hand_01", tmp_path).evidence_html
+    legend = re.findall(r'<p class="legend">(.*?)</p>', html, flags=re.S)
+    assert len(legend) == 1
+    for word in ["found", "not found", "stale", "conflicting", "not checked"]:
+        assert word in legend[0]
+
+
+def test_colour_is_never_the_only_signal(tmp_path: Path) -> None:
+    """Every pill has words, and every icon is hidden from screen readers."""
+    html = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
+    pills = re.findall(r'<span class="pill pill-\w+">.*?</span></span>|<span class="pill pill-\w+"><span class="icon"[^>]*>[^<]*</span>[^<]*</span>', html)
+    assert pills
+    for p in pills:
+        assert _text(p), p
+        assert 'class="icon" aria-hidden="true"' in p

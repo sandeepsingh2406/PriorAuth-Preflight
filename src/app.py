@@ -69,9 +69,16 @@ BANNER = """# PriorAuth Preflight
 
 **Limits.** Synthetic notes and invented payer rules only. It checks documentation, not whether the treatment is right. It never sends, submits or emails anything. The model can miss or misread, so check the quotes."""
 STATUS_STYLE = {
-    "READY": ("#1b7f3b", "All required items are documented with verified quotes."),
-    "NOT_READY": ("#b45309", "Some required items are missing or out of date."),
-    "NEEDS_REVIEW": ("#b91c1c", "A person needs to read the evidence."),
+    "READY": ("✅", "badge-ready", "All required items are documented with verified quotes."),
+    "NOT_READY": ("⏳", "badge-not_ready", "Some required items are missing or out of date."),
+    "NEEDS_REVIEW": ("⚠️", "badge-needs_review", "A person needs to read the evidence."),
+}
+# Result of one item in the evidence table: palette state, icon, words. Words always stay.
+RESULT_PILLS = {
+    "found": ("ok", "✅", "found"),
+    "not found": ("warn", "❓", "not found"),
+    "conflicting": ("bad", "⚠️", "conflicting"),
+    "not checked": ("muted", "➖", "not checked"),
 }
 
 
@@ -258,10 +265,9 @@ def _e(text: object) -> str:
 
 
 def _status_html(report: GapReport) -> str:
-    color, blurb = STATUS_STYLE[report.status]
+    icon, badge, blurb = STATUS_STYLE[report.status]
     return (
-        f'<div style="display:inline-block;padding:6px 14px;border-radius:6px;background:{color};'
-        f'color:#fff;font-weight:700;font-size:1.1em">{_e(report.status)}</div>'
+        f'<span class="badge {badge}"><span class="icon" aria-hidden="true">{icon}</span>{_e(report.status)}</span>'
         f'<span style="margin-left:10px">{_e(blurb)}</span>'
     )
 
@@ -292,6 +298,29 @@ def render_requirements(payer_id: str | None) -> str:
         f"<p>These are invented payer rules for this prototype (from data/checklists.yaml), not real payer policy.</p>"
         f"<p>Payer {_e(payer_id)} requires:</p><ul>{items}</ul>"
         f"<p>Lab results must be dated within {checklist.lab_window_days} days of the order date.</p>"
+    )
+
+
+def pill(state: str, icon: str, text: str) -> str:
+    """A small coloured label: an icon (hidden from screen readers) plus the words.
+
+    The class comes only from the fixed palette, and the words are escaped.
+    """
+    if state not in PALETTE:
+        raise ValueError(f"Unknown colour state {state!r}")
+    return f'<span class="pill pill-{state}"><span class="icon" aria-hidden="true">{icon}</span>{_e(text)}</span>'
+
+
+def _result_pill(kind: str) -> str:
+    state, icon, text = RESULT_PILLS[kind]
+    return pill(state, icon, text)
+
+
+def _table_row(name: str, required_html: str, kind: str, extra: str, quote_html: str) -> str:
+    state = RESULT_PILLS[kind][0]
+    return (
+        f'<tr class="row-{state}"><td>{_e(name)}</td><td>{required_html}</td>'
+        f"<td>{_result_pill(kind)}{extra}</td><td>{quote_html}</td></tr>"
     )
 
 
@@ -334,28 +363,31 @@ def _evidence_html(
 
     required = {item.name for item in checklist.items}
     conflicted = {g.item for g in report.gaps if g.reason == "conflicting"}
+    required_pill = pill("info", "📌", "Required")
+    not_required_pill = pill("muted", "➖", "Not required by this payer")
     rows = []
     for item in _known_items():
         f = fields.get(item.name)
+        recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[item.name])}</div>' if item.name in lab_lines else ""
         if item.name not in required:
-            rows.append(f"<tr><td>{_e(item.name)}</td><td>Not required by this payer</td><td>not checked</td><td></td></tr>")
+            rows.append(_table_row(item.name, not_required_pill, "not checked", "", ""))
         elif not checked:
-            rows.append(f"<tr><td>{_e(item.name)}</td><td>Required</td><td>not checked</td><td></td></tr>")
+            rows.append(_table_row(item.name, required_pill, "not checked", "", ""))
         elif item.name in conflicted:
             quotes = ([f.quote] if f and f.quote else []) + (f.conflicting_quotes if f else [])
-            recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[item.name])}</div>' if item.name in lab_lines else ""
-            rows.append(
-                f"<tr><td>{_e(item.name)}</td><td>Required</td><td>conflicting</td>"
-                f"<td>{''.join(_quote(q) for q in quotes)}{recency}</td></tr>"
-            )
+            rows.append(_table_row(item.name, required_pill, "conflicting", "", "".join(_quote(q) for q in quotes) + recency))
         elif f is not None and f.found and f.quote:
-            date = f" (lab date {_e(f.date)})" if f.date else ""
-            recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[item.name])}</div>' if item.name in lab_lines else ""
-            rows.append(f"<tr><td>{_e(item.name)}</td><td>Required</td><td>found{date}</td><td>{_quote(f.quote)}{recency}</td></tr>")
+            date = f" <small>(lab date {_e(f.date)})</small>" if f.date else ""
+            rows.append(_table_row(item.name, required_pill, "found", date, _quote(f.quote) + recency))
         else:
-            rows.append(f"<tr><td>{_e(item.name)}</td><td>Required</td><td>not found</td><td></td></tr>")
+            rows.append(_table_row(item.name, required_pill, "not found", "", ""))
+    legend = " &middot; ".join(
+        f'<span class="icon" aria-hidden="true">{icon}</span> {_e(label)}'
+        for icon, label in [("✅", "found"), ("❓", "not found"), ("⏳", "stale"), ("⚠️", "conflicting"), ("➖", "not checked")]
+    )
     parts.append(
-        "<h4>Evidence for each item</h4><table><tr><th>Item</th><th>Required?</th><th>Result</th>"
+        f'<h4>Evidence for each item</h4><p class="legend">{legend}</p>'
+        '<table class="evidence-table"><tr><th>Item</th><th>Required?</th><th>Result</th>'
         "<th>Quote from the note</th></tr>"
     )
     parts.append("".join(rows) + "</table>")
