@@ -15,13 +15,33 @@ what is missing. A person reviews everything. **Nothing is ever sent, submitted 
 
 The model reads and drafts; code decides and verifies. See [SPEC.md](SPEC.md) for the design.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    NOTE["Clinical note<br/>(synthetic)"] --> EXTRACT["Extraction model<br/>reads the note and quotes evidence"]
+    EXTRACT --> CHECKS["Code checks, no model<br/>quotes found word for word in the note<br/>payer checklist lookup<br/>lab recency window<br/>plan vs order (drug and dose)"]
+    ORDER["Order<br/>(drug, dose, payer, date)"] --> CHECKS
+    CHECKS --> STATUS{"Status, decided by code<br/>READY / NOT_READY / NEEDS_REVIEW"}
+    STATUS -- "NOT_READY" --> GAPS["Gap list only<br/>no note, no quotes"]
+    GAPS --> OUTREACH["Outreach model<br/>drafts an internal request"]
+    OUTREACH --> HUMAN["Human review<br/>approve, edit or discard<br/>nothing is sent"]
+    STATUS -- "READY or NEEDS_REVIEW" --> HUMAN
+    STATUS --> AUDIT[("Audit log<br/>no note text")]
+    HUMAN --> AUDIT
+```
+
+The model reads and drafts; code decides and verifies. The Outreach model sees only the gap list.
+
 ## Quick start
 
 Requires Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
+git clone https://github.com/sandeepsingh2406/PriorAuth-Preflight.git
+cd PriorAuth-Preflight
 uv sync
-cp env.example .env        # then set OPENAI_API_KEY, MODEL_DEV and MODEL_DEMO in .env
+cp env.example .env        # then open .env and set OPENAI_API_KEY, MODEL_DEV and MODEL_DEMO
 uv run pytest -q           # the tests never call a model
 uv run python -m src.run --case hand_04    # check one case from the command line
 uv run python -m src.app                   # the one-screen UI at http://127.0.0.1:7860
@@ -32,6 +52,32 @@ uv run python scripts/gen_cases.py         # regenerate the seeded synthetic cas
 `.env` is git-ignored and keys are read from environment variables only. Model names come from
 `MODEL_DEV` and `MODEL_DEMO` (set `USE_DEMO_MODEL=true` to use the second). The app listens on
 this computer only. For a temporary public link, run it with `DEMO_MODE=1 uv run python -m src.app --share` and stop it when you are done.
+
+## Results
+
+Measured on 40 synthetic cases (10 hand-written, 30 generated; 7 ambiguous), 3 runs, one model.
+Each cell is the value across the 3 runs; a range means the runs differed.
+
+| Measure | Target | Hand-labeled (10 cases) | Generated (30 cases) |
+| --- | --- | --- | --- |
+| Status accuracy | - | 1.00 | 0.97 |
+| Gap recall | >= 0.90 | 1.00 | 1.00 |
+| False alarm rate | <= 0.10 | 0.00 | 0.00 |
+| Escalation correctness | >= 0.80 | 1.00 | 0.80 |
+| Citation validity (quotes in reports) | 1.00 | 1.00 | 1.00 |
+
+Automatic sends: 0. No tool exists that submits, emails or sends anything.
+
+**The one miss.** `gen_003` is an ambiguous case (a repeat lab on a later date with a different
+value) that was scored `READY` instead of `NEEDS_REVIEW` in all 3 runs. That is the unsafe
+direction: a packet that should have gone to a person was not flagged. It is not fixed. Re-running
+it showed the model escalates it only about 2 of 5 times, so the steady result across 3 runs is
+partly luck, and the escalation target is met only just. Whether it is truly ambiguous is a
+labeling question; the label was left unchanged on purpose.
+
+**Small and synthetic.** 40 invented notes, 3 runs, one model. These numbers describe this
+prototype on this data, not real clinical practice. The full report, including the baseline run
+and what changed after it, is in [eval/results.md](eval/results.md).
 
 ## What is in the repo
 
