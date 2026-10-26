@@ -79,7 +79,16 @@ RESULT_PILLS = {
     "not found": ("warn", "❓", "not found"),
     "conflicting": ("bad", "⚠️", "conflicting"),
     "not checked": ("muted", "➖", "not checked"),
+    "stale": ("warn", "⏳", "stale"),
 }
+# One gap in the list: palette state, icon, words (the reason check_packet gave).
+GAP_PILLS = {
+    "missing": ("warn", "❓", "missing"),
+    "stale": ("warn", "⏳", "stale"),
+    "conflicting": ("bad", "⚠️", "conflicting"),
+}
+# The lab line's colour follows the verdict, like the status it causes.
+LAB_STATE = {"within window": "ok", "stale": "warn", "after the order date": "bad", "date missing or unreadable": "bad"}
 
 
 def build_css() -> str:
@@ -324,6 +333,13 @@ def _table_row(name: str, required_html: str, kind: str, extra: str, quote_html:
     )
 
 
+def _lab_callout(recency: LabRecency) -> str:
+    return (
+        f'<div class="callout callout-{LAB_STATE[recency.verdict]}" style="margin:2px 0 4px 12px">'
+        f'<span class="icon" aria-hidden="true">🧪</span>{_e(recency.text)}</div>'
+    )
+
+
 def _quote(text: str) -> str:
     return f'<blockquote style="margin:4px 0 4px 12px;padding-left:8px;border-left:3px solid #999">{_e(text)}</blockquote>'
 
@@ -331,7 +347,7 @@ def _quote(text: str) -> str:
 def _evidence_html(
     report: GapReport,
     checklist: PayerChecklist,
-    lab_lines: dict[str, str] | None = None,
+    lab_lines: dict[str, LabRecency] | None = None,
     checked: bool = True,
 ) -> str:
     fields = {f.name: f for f in report.fields}
@@ -351,15 +367,17 @@ def _evidence_html(
             field = fields.get(gap.item)
             quotes = ([field.quote] if field and field.quote else []) + (field.conflicting_quotes if field else [])
             evidence = f'<div style="margin-top:4px">{"".join(_quote(q) for q in quotes)}</div>' if quotes else ""
+            state, icon, word = GAP_PILLS[gap.reason]
             items.append(
-                f'<li style="margin-bottom:10px"><strong>{_e(gap.item)}</strong> <em>[{_e(gap.reason)}]</em>'
+                f'<li class="gap-{state}" style="margin-bottom:10px;list-style:none">'
+                f"<strong>{_e(gap.item)}</strong> {pill(state, icon, word)}"
                 f'<div style="margin-top:2px">{_e(gap.detail)}</div>{evidence}</li>'
             )
         parts.append("<ul>" + "".join(items) + "</ul>")
 
     if report.unreadable_passages:
         parts.append("<h4>Unreadable text in the note</h4>")
-        parts += [_quote(p) for p in report.unreadable_passages]
+        parts.append('<div class="callout callout-bad">' + "".join(_quote(p) for p in report.unreadable_passages) + "</div>")
 
     required = {item.name for item in checklist.items}
     conflicted = {g.item for g in report.gaps if g.reason == "conflicting"}
@@ -368,7 +386,7 @@ def _evidence_html(
     rows = []
     for item in _known_items():
         f = fields.get(item.name)
-        recency = f'<div style="margin:2px 0 4px 12px">{_e(lab_lines[item.name])}</div>' if item.name in lab_lines else ""
+        recency = _lab_callout(lab_lines[item.name]) if item.name in lab_lines else ""
         if item.name not in required:
             rows.append(_table_row(item.name, not_required_pill, "not checked", "", ""))
         elif not checked:
@@ -378,7 +396,8 @@ def _evidence_html(
             rows.append(_table_row(item.name, required_pill, "conflicting", "", "".join(_quote(q) for q in quotes) + recency))
         elif f is not None and f.found and f.quote:
             date = f" <small>(lab date {_e(f.date)})</small>" if f.date else ""
-            rows.append(_table_row(item.name, required_pill, "found", date, _quote(f.quote) + recency))
+            stale = item.name in lab_lines and lab_lines[item.name].verdict == "stale"
+            rows.append(_table_row(item.name, required_pill, "stale" if stale else "found", date, _quote(f.quote) + recency))
         else:
             rows.append(_table_row(item.name, required_pill, "not found", "", ""))
     legend = " &middot; ".join(
@@ -420,7 +439,7 @@ def run_case(
     checklist = lookup_payer_checklist(order.payer_id)
     lab_items = {item.name for item in checklist.items if item.kind == "lab"}
     lab_lines = {
-        f.name: lab_recency(f.date, order.order_date, checklist.lab_window_days).text
+        f.name: lab_recency(f.date, order.order_date, checklist.lab_window_days)
         for f in run.report.fields
         if f.name in lab_items and f.found and f.quote
     }

@@ -384,7 +384,7 @@ def test_the_reason_is_hidden_when_conflicting_gaps_already_explain_it(tmp_path:
     view = _run("hand_08", tmp_path, conflicts={"stage": ["x"]})
     assert "NEEDS_REVIEW" in view.status_html
     assert "Escalation reason" not in view.evidence_html
-    assert "[conflicting]" in view.evidence_html
+    assert "pill-bad" in view.evidence_html.split("<table")[0]  # the gap list names it in red
 
 
 def test_the_reason_is_shown_for_unreadable_text(tmp_path: Path) -> None:
@@ -900,8 +900,8 @@ def test_each_status_has_its_own_badge_with_an_icon_and_the_words(tmp_path: Path
 
 def _result_pill(html: str, item: str) -> tuple[str, str]:
     cell = _cells(_row(html, item))[2]
-    state = re.search(r"pill-(\w+)", cell).group(1)
-    return state, _text(cell)
+    pill_html = re.search(r'<span class="pill pill-(\w+)">.*?</span>[^<]*</span>', cell, flags=re.S)
+    return pill_html.group(1), _text(pill_html.group(0))  # the pill's own words, not the date note beside it
 
 
 def test_found_is_green_not_found_is_amber_conflicting_is_red_not_checked_is_gray(tmp_path: Path) -> None:
@@ -953,3 +953,93 @@ def test_colour_is_never_the_only_signal(tmp_path: Path) -> None:
     for p in pills:
         assert _text(p), p
         assert 'class="icon" aria-hidden="true"' in p
+
+
+# --- the gap list and the lab line ------------------------------------------------------------------
+
+
+def _gap_items(html: str) -> list[str]:
+    section = html.split("Evidence for each item")[0]
+    return re.findall(r"<li class=.*?</li>", section, flags=re.S)
+
+
+def _gap_state_and_word(li: str) -> tuple[str, str]:
+    state = re.search(r'<li class="gap-(\w+)"', li).group(1)
+    word = _text(re.search(r'<span class="pill pill-\w+">.*?</span>[^<]*</span>', li, flags=re.S).group(0))
+    return state, word
+
+
+def test_a_missing_item_is_an_amber_gap_with_a_missing_pill(tmp_path: Path) -> None:
+    items = _gap_items(_run("hand_07", tmp_path).evidence_html)
+    assert [_gap_state_and_word(li) for li in items] == [("warn", "missing"), ("warn", "missing")]
+
+
+def test_a_stale_lab_is_an_amber_gap_with_a_stale_pill(tmp_path: Path) -> None:
+    (li,) = _gap_items(_run("hand_04", tmp_path).evidence_html)
+    assert _gap_state_and_word(li) == ("warn", "stale")
+
+
+def test_a_conflict_is_a_red_gap_with_a_conflicting_pill(tmp_path: Path) -> None:
+    html = _run("hand_08", tmp_path, conflicts={"stage": ["stage IV non-small cell lung cancer"]}).evidence_html
+    (li,) = _gap_items(html)
+    assert _gap_state_and_word(li) == ("bad", "conflicting")
+    assert "stage IV non-small cell lung cancer" in li  # the quotes stay inside the gap
+
+
+def _lab_callout(html: str) -> tuple[str, str]:
+    m = re.search(r'<div class="callout callout-(\w+)"[^>]*><span class="icon" aria-hidden="true">🧪</span>(Lab [^<]*)</div>', html)
+    return m.group(1), m.group(2)
+
+
+def test_the_lab_line_is_green_within_the_window(tmp_path: Path) -> None:
+    state, text = _lab_callout(_run("hand_05", tmp_path).evidence_html)
+    assert (state, text) == ("ok", "Lab 2026-04-10, order 2026-05-25: 45 days, window 45, within window.")
+
+
+def test_the_lab_line_is_amber_when_stale(tmp_path: Path) -> None:
+    state, text = _lab_callout(_run("hand_04", tmp_path).evidence_html)
+    assert (state, text) == ("warn", "Lab 2026-04-10, order 2026-05-11: 31 days, window 30, stale.")
+
+
+def test_the_lab_line_is_red_when_the_lab_is_after_the_order(tmp_path: Path) -> None:
+    _, note = load_case("hand_01")
+    fields = [f.model_copy(update={"date": datetime.date(2026, 5, 10)}) if f.name == "recent_lab" else f for f in _extraction(note)(None).fields]
+    view = run_case(_form("hand_01"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    state, text = _lab_callout(view.evidence_html)
+    assert state == "bad" and "after the order date" in text
+
+
+def test_the_lab_line_is_red_when_the_date_is_unreadable(tmp_path: Path) -> None:
+    _, note = load_case("hand_01")
+    fields = [f.model_copy(update={"date": None}) if f.name == "recent_lab" else f for f in _extraction(note)(None).fields]
+    view = run_case(_form("hand_01"), llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    # no date, so the line is the plain red notice
+    m = re.search(r'<div class="callout callout-bad"[^>]*><span class="icon" aria-hidden="true">🧪</span>Lab date missing or unreadable\.</div>', view.evidence_html)
+    assert m
+
+
+def test_a_stale_lab_row_says_stale_in_amber_not_found_in_green(tmp_path: Path) -> None:
+    html = _run("hand_04", tmp_path).evidence_html
+    assert _result_pill(html, "recent_lab") == ("warn", "stale")
+    assert 'class="row-warn"' in _row(html, "recent_lab")
+    assert "(lab date 2026-04-10)" in _text(_cells(_row(html, "recent_lab"))[2])
+
+
+def test_a_lab_within_the_window_stays_green_and_found(tmp_path: Path) -> None:
+    html = _run("hand_05", tmp_path).evidence_html
+    assert _result_pill(html, "recent_lab") == ("ok", "found")
+    assert 'class="row-ok"' in _row(html, "recent_lab")
+
+
+def test_unreadable_text_sits_in_a_red_callout_and_is_escaped(tmp_path: Path) -> None:
+    bad = "<i>EG?R ex@n</i> [unreadable]"
+    _, note = load_case("hand_01")
+    fields = _extraction(note)(None).fields
+    view = run_case(
+        _form("hand_01", note=note + bad + "\n"),
+        llm=lambda p: ExtractionResult(fields=fields, unreadable_passages=[bad]),
+        outreach_llm=_outreach,
+        audit_path=tmp_path / "audit.jsonl",
+    )
+    m = re.search(r'<div class="callout callout-bad">(.*?)</div>', view.evidence_html, flags=re.S)
+    assert m and "&lt;i&gt;EG?R ex@n&lt;/i&gt; [unreadable]" in m.group(1) and "<i>" not in view.evidence_html
