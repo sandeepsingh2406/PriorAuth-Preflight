@@ -12,12 +12,17 @@ from src.app import (
     DISCARD_LABEL,
     EDIT_LABEL,
     PALETTE,
+    PAYER_LABEL,
+    REQUIREMENTS_LABEL,
     REVIEWED_LABEL,
     RUN_LABEL,
     SOLID,
     CaseForm,
+    _notice_html,
     build_css,
     build_theme,
+    callout,
+    decision_callout,
     build_app,
     case_id_for,
     decide,
@@ -546,10 +551,10 @@ def test_the_panel_is_a_collapsed_accordion_filled_for_the_default_payer_and_upd
     import gradio as gr
 
     demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
-    accordions = [b for b in demo.blocks.values() if isinstance(b, gr.Accordion) and b.label == "Payer requirements"]
+    accordions = [b for b in demo.blocks.values() if isinstance(b, gr.Accordion) and b.label == REQUIREMENTS_LABEL]
     assert len(accordions) == 1 and accordions[0].open is False
     assert render_requirements("payer_a") in {getattr(b, "value", None) for b in demo.blocks.values()}
-    payer = next(b for b in demo.blocks.values() if isinstance(b, gr.Dropdown) and b.label == "Payer")
+    payer = next(b for b in demo.blocks.values() if isinstance(b, gr.Dropdown) and b.label == PAYER_LABEL)
     targets = [tuple(t) for dep in demo.config["dependencies"] for t in dep["targets"]]
     assert (payer._id, "change") in targets
 
@@ -1041,5 +1046,100 @@ def test_unreadable_text_sits_in_a_red_callout_and_is_escaped(tmp_path: Path) ->
         outreach_llm=_outreach,
         audit_path=tmp_path / "audit.jsonl",
     )
-    m = re.search(r'<div class="callout callout-bad">(.*?)</div>', view.evidence_html, flags=re.S)
+    m = re.search(r'<div class="callout callout-bad">(<blockquote.*?)</div>', view.evidence_html, flags=re.S)
     assert m and "&lt;i&gt;EG?R ex@n&lt;/i&gt; [unreadable]" in m.group(1) and "<i>" not in view.evidence_html
+
+
+# --- callouts, headings, labels, trace and the title block ---------------------------------------
+
+
+def test_callout_markup_and_state_check() -> None:
+    assert callout("ok", "✅", "Saved") == '<div class="callout callout-ok"><span class="icon" aria-hidden="true">✅</span>Saved</div>'
+    with pytest.raises(ValueError):
+        callout('ok"><script>', "✅", "x")
+    assert "&lt;b&gt;" in callout("warn", "ℹ️", "<b>x</b>") and "<b>" not in callout("warn", "ℹ️", "<b>x</b>")
+
+
+def _message_state(message: str) -> str:
+    return re.search(r"callout-(\w+)", decision_callout(message)).group(1)
+
+
+def test_a_recorded_decision_is_green_and_keeps_the_nothing_was_sent_wording(tmp_path: Path) -> None:
+    view = _run("hand_07", tmp_path)
+    message = decide(view.session, "approve", view.subject, view.body, audit_path=tmp_path / "audit.jsonl")
+    assert _message_state(message) == "ok"
+    assert "Nothing was sent" in decision_callout(message)
+
+
+def test_refusals_and_hints_are_amber(tmp_path: Path) -> None:
+    ready = _run("hand_01", tmp_path)
+    draft = _run("hand_07", tmp_path)
+    for message in [
+        decide(None, "approve", "", "", audit_path=tmp_path / "a.jsonl"),  # run a case first
+        decide(ready.session, "approve", "", "", audit_path=tmp_path / "a.jsonl"),  # no draft to approve
+        decide(draft.session, "reviewed", "", "", audit_path=tmp_path / "a.jsonl"),  # a draft is on screen
+        decide(draft.session, "edit", draft.subject, draft.body, audit_path=tmp_path / "a.jsonl"),  # no changes
+        decide(draft.session, "dance", "", "", audit_path=tmp_path / "a.jsonl"),  # unknown action
+    ]:
+        assert _message_state(message) == "warn", message
+
+
+def test_a_save_failure_is_red() -> None:
+    assert _message_state("The decision could not be saved (OSError). Try again.") == "bad"
+
+
+def test_decision_messages_are_escaped() -> None:
+    assert "<script>" not in decision_callout("Decision recorded: <script>alert(1)</script>")
+
+
+def test_errors_are_red_and_notices_are_amber() -> None:
+    from src.app import RunView
+
+    assert "callout-bad" in _notice_html(RunView(error="Enter the order date as YYYY-MM-DD."))
+    assert "callout-warn" in _notice_html(RunView(notice="The draft could not be written (RuntimeError)."))
+    assert _notice_html(RunView()) == ""
+
+
+def test_the_escalation_reason_is_a_red_callout(tmp_path: Path) -> None:
+    def broken(prompt: str) -> ExtractionResult:
+        raise RuntimeError("boom")
+
+    html = run_case(_form("hand_01"), llm=broken, outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl").evidence_html
+    assert re.search(r'<div class="callout callout-bad">.*?<strong>Escalation reason:</strong>', html, flags=re.S)
+
+
+def test_section_headings_have_a_hidden_icon_and_keep_their_words(tmp_path: Path) -> None:
+    html = _run("hand_07", tmp_path).evidence_html
+    for words in ["Gaps", "Evidence for each item"]:
+        assert re.search(rf'<h4><span class="icon" aria-hidden="true">[^<]+</span>{words}</h4>', html), words
+
+
+def test_the_unreadable_heading_has_an_icon_too(tmp_path: Path) -> None:
+    bad = "EG?R ex@n [unreadable]"
+    _, note = load_case("hand_01")
+    fields = _extraction(note)(None).fields
+    view = run_case(_form("hand_01", note=note + bad + "\n"), llm=lambda p: ExtractionResult(fields=fields, unreadable_passages=[bad]), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    assert re.search(r'<h4><span class="icon" aria-hidden="true">[^<]+</span>Unreadable text in the note</h4>', view.evidence_html)
+
+
+def test_the_trace_marks_each_tool_with_a_tick_and_a_failed_draft_with_a_cross(tmp_path: Path) -> None:
+    ok = _run("hand_07", tmp_path).trace
+    assert "✔ lookup_payer_checklist" in ok and "✔ draft_request" in ok and "✖" not in ok
+
+    def broken(prompt: str) -> DraftText:
+        raise RuntimeError("boom")
+
+    failed = run_case(_form("hand_07"), llm=_extraction(_form("hand_07").note), outreach_llm=broken, audit_path=tmp_path / "audit.jsonl")
+    assert "✖ draft_request_failed" in failed.trace and "✔ check_packet" in failed.trace
+
+
+def test_the_draft_heading_and_the_input_labels_have_icons_and_words(tmp_path: Path) -> None:
+    view = _run("hand_07", tmp_path)
+    assert view.draft_label.endswith("Draft request to the care team (not sent)") and view.draft_label[0] not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    assert PAYER_LABEL.endswith("Payer") and REQUIREMENTS_LABEL.endswith("Payer requirements")
+
+
+def test_the_title_steps_and_the_never_sends_line_carry_icons() -> None:
+    steps = [line for line in BANNER.splitlines() if line[:3] in ("1. ", "2. ", "3. ")]
+    assert len(steps) == 3 and all(not line[3].isascii() for line in steps)  # an icon right after "1. "
+    assert "🔒" in BANNER and "never sends" in BANNER

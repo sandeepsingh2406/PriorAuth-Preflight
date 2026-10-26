@@ -40,6 +40,13 @@ APPROVE_LABEL = "✅ Approve draft (logs decision only)"  # it records a decisio
 EDIT_LABEL = "✏️ Edit"
 DISCARD_LABEL = "🗑️ Discard"
 REVIEWED_LABEL = "👀 Mark reviewed"
+CASE_LABEL = "📂 Case (or leave empty and paste a note)"
+NOTE_LABEL = "📝 Clinical note (synthetic)"
+PAYER_LABEL = "🏥 Payer"
+REQUIREMENTS_LABEL = "📋 Payer requirements"
+ORDER_DATE_LABEL = "📅 Order date (YYYY-MM-DD)"
+TRACE_LABEL = "🧭 Tool-call trace"
+DRAFT_LABEL = "✉️ Draft request to the care team (not sent)"
 
 # Colour means what an item does to the status: green fine, amber not ready, red needs a person,
 # gray not applicable, blue neutral. state -> (text colour, background, accent edge).
@@ -63,11 +70,11 @@ SOLID = {
 BANNER = """# PriorAuth Preflight
 
 **How it works**
-1. The model reads the note and quotes the evidence for each item the payer requires.
-2. Plain code checks every quote word for word against the note, compares it with the payer's rules, and decides the status.
-3. If items are missing, a second model drafts an internal request from the gap list only. A person reviews everything.
+1. 🤖 The model reads the note and quotes the evidence for each item the payer requires.
+2. 🔬 Plain code checks every quote word for word against the note, compares it with the payer's rules, and decides the status.
+3. ✉️ If items are missing, a second model drafts an internal request from the gap list only. A person reviews everything.
 
-**Limits.** Synthetic notes and invented payer rules only. It checks documentation, not whether the treatment is right. It never sends, submits or emails anything. The model can miss or misread, so check the quotes."""
+**Limits.** Synthetic notes and invented payer rules only. It checks documentation, not whether the treatment is right. 🔒 It never sends, submits or emails anything. The model can miss or misread, so check the quotes."""
 STATUS_STYLE = {
     "READY": ("✅", "badge-ready", "All required items are documented with verified quotes."),
     "NOT_READY": ("⏳", "badge-not_ready", "Some required items are missing or out of date."),
@@ -300,7 +307,8 @@ def render_requirements(payer_id: str | None) -> str:
         return "<p>Choose a payer to see its requirements.</p>"
     checklist = lookup_payer_checklist(payer_id)
     items = "".join(
-        f"<li><strong>{_e(i.name)}</strong>: {_e(i.description)}{' (a dated lab)' if i.kind == 'lab' else ''}</li>"
+        f"<li><strong>{_e(i.name)}</strong>: {_e(i.description)}"
+        f"{' <span class=\"icon\" aria-hidden=\"true\">🧪</span>(a dated lab)' if i.kind == 'lab' else ''}</li>"
         for i in checklist.items
     )
     return (
@@ -318,6 +326,22 @@ def pill(state: str, icon: str, text: str) -> str:
     if state not in PALETTE:
         raise ValueError(f"Unknown colour state {state!r}")
     return f'<span class="pill pill-{state}"><span class="icon" aria-hidden="true">{icon}</span>{_e(text)}</span>'
+
+
+def callout(state: str, icon: str, text: str) -> str:
+    """A tinted message box with a hidden icon and escaped words; the colour comes from the palette."""
+    if state not in PALETTE:
+        raise ValueError(f"Unknown colour state {state!r}")
+    return f'<div class="callout callout-{state}"><span class="icon" aria-hidden="true">{icon}</span>{_e(text)}</div>'
+
+
+def decision_callout(message: str) -> str:
+    """Colour a message from decide(): green when recorded, red when saving failed, amber otherwise."""
+    if message.startswith("Decision recorded"):
+        return callout("ok", "✅", message)
+    if "could not be saved" in message:
+        return callout("bad", "⛔", message)
+    return callout("warn", "ℹ️", message)
 
 
 def _result_pill(kind: str) -> str:
@@ -356,9 +380,12 @@ def _evidence_html(
     # A conflicting gap already explains itself next to its quotes; show the reason only when it adds something.
     conflicts_explain_it = any(g.reason == "conflicting" for g in report.gaps) and not report.unreadable_passages
     if report.escalation_reason and not conflicts_explain_it:
-        parts.append(f"<p><strong>Escalation reason:</strong> {_e(report.escalation_reason)}</p>")
+        parts.append(
+            '<div class="callout callout-bad"><span class="icon" aria-hidden="true">⚠️</span>'
+            f"<strong>Escalation reason:</strong> {_e(report.escalation_reason)}</div>"
+        )
 
-    parts.append("<h4>Gaps</h4>")
+    parts.append('<h4><span class="icon" aria-hidden="true">🔎</span>Gaps</h4>')
     if not report.gaps:
         parts.append("<p>No gaps.</p>")
     else:
@@ -376,7 +403,7 @@ def _evidence_html(
         parts.append("<ul>" + "".join(items) + "</ul>")
 
     if report.unreadable_passages:
-        parts.append("<h4>Unreadable text in the note</h4>")
+        parts.append('<h4><span class="icon" aria-hidden="true">🔍</span>Unreadable text in the note</h4>')
         parts.append('<div class="callout callout-bad">' + "".join(_quote(p) for p in report.unreadable_passages) + "</div>")
 
     required = {item.name for item in checklist.items}
@@ -405,7 +432,7 @@ def _evidence_html(
         for icon, label in [("✅", "found"), ("❓", "not found"), ("⏳", "stale"), ("⚠️", "conflicting"), ("➖", "not checked")]
     )
     parts.append(
-        f'<h4>Evidence for each item</h4><p class="legend">{legend}</p>'
+        f'<h4><span class="icon" aria-hidden="true">📑</span>Evidence for each item</h4><p class="legend">{legend}</p>'
         '<table class="evidence-table"><tr><th>Item</th><th>Required?</th><th>Result</th>'
         "<th>Quote from the note</th></tr>"
     )
@@ -415,7 +442,9 @@ def _evidence_html(
 
 def _trace(run: AnalysisRun, model_label: str) -> str:
     lines = [f"Run id: {run.run_id}", f"Model: {model_label}", "Tools called, in order:"]
-    lines += [f"  {i}. {name}" for i, name in enumerate(run.tools_called, start=1)]
+    lines += [
+        f"  {i}. {'✖' if name.endswith('_failed') else '✔'} {name}" for i, name in enumerate(run.tools_called, start=1)
+    ]
     if run.draft_error:
         lines.append(f"Draft request failed: {run.draft_error}")
     return "\n".join(lines)
@@ -458,7 +487,7 @@ def run_case(
         evidence_html=_evidence_html(run.report, checklist, lab_lines, checked="check_packet" in run.tools_called),
         trace=_trace(run, model_label),
         show_draft=run.draft is not None,
-        draft_label="Draft request to the care team (not sent)",
+        draft_label=DRAFT_LABEL,
         subject=subject,
         body=body,
         show_reviewed=run.draft is None,
@@ -508,8 +537,11 @@ def decide(
 
 
 def _notice_html(view: RunView) -> str:
-    message = view.error or view.notice
-    return f'<p style="color:#b91c1c">{_e(message)}</p>' if message else ""
+    if view.error:
+        return callout("bad", "⛔", view.error)
+    if view.notice:
+        return callout("warn", "⚠️", view.notice)
+    return ""
 
 
 def build_app(
@@ -525,22 +557,22 @@ def build_app(
         session = gr.State(None)
         with gr.Row():
             with gr.Column(scale=1):
-                case = gr.Dropdown(choices=list_cases(), value=None, label="Case (or leave empty and paste a note)", filterable=True)
-                note = gr.Textbox(label="Clinical note (synthetic)", lines=14, max_lines=30)
-                payer = gr.Dropdown(choices=PAYERS, value="payer_a", label="Payer")
-                with gr.Accordion("Payer requirements", open=False):
+                case = gr.Dropdown(choices=list_cases(), value=None, label=CASE_LABEL, filterable=True)
+                note = gr.Textbox(label=NOTE_LABEL, lines=14, max_lines=30)
+                payer = gr.Dropdown(choices=PAYERS, value="payer_a", label=PAYER_LABEL)
+                with gr.Accordion(REQUIREMENTS_LABEL, open=False):
                     requirements = gr.HTML(value=render_requirements("payer_a"))
-                order_date = gr.Textbox(label="Order date (YYYY-MM-DD)")
-                drug = gr.Textbox(label="Drug")
-                dose = gr.Textbox(label="Dose")
-                schedule = gr.Textbox(label="Schedule")
+                order_date = gr.Textbox(label=ORDER_DATE_LABEL)
+                drug = gr.Textbox(label="💊 Drug")
+                dose = gr.Textbox(label="💉 Dose")
+                schedule = gr.Textbox(label="🗓️ Schedule")
                 run_button = gr.Button(RUN_LABEL, variant="primary")
             with gr.Column(scale=1):
                 status = gr.HTML()
                 notice = gr.HTML()
                 evidence = gr.HTML()
                 with gr.Group(visible=False) as draft_group:
-                    subject = gr.Textbox(label="Draft request to the care team (not sent): subject", interactive=True)
+                    subject = gr.Textbox(label=DRAFT_LABEL + ": subject", interactive=True)
                     body = gr.Textbox(label="Body (you can edit it)", lines=8, interactive=True)
                     with gr.Row():
                         approve = gr.Button(APPROVE_LABEL, variant="secondary", elem_classes=["btn-approve"])
@@ -548,8 +580,8 @@ def build_app(
                         discard = gr.Button(DISCARD_LABEL, elem_classes=["btn-discard"])
                 reviewed = gr.Button(REVIEWED_LABEL, visible=False, elem_classes=["btn-reviewed"])
                 decision = gr.HTML()
-                with gr.Accordion("Tool-call trace", open=False):
-                    trace = gr.Textbox(label="Trace", lines=8, interactive=False)
+                with gr.Accordion(TRACE_LABEL, open=False):
+                    trace = gr.Textbox(label=TRACE_LABEL, lines=8, interactive=False)
 
         def on_case_change(case_id: str | None):
             if not case_id:
@@ -579,7 +611,7 @@ def build_app(
         def make_decider(action: str):
             def on_decision(current, subject_text, body_text):
                 message = decide(current, action, subject_text or "", body_text or "", audit_path=audit_path)
-                return f"<p>{_e(message)}</p>"
+                return decision_callout(message)
 
             return on_decision
 
