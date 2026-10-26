@@ -57,6 +57,7 @@ this computer only.
 - **Illustrative checklists.** The three payers are invented and are not real payer policy.
 - **Documentation completeness only.** It does not judge whether a treatment is appropriate.
 - **The model can miss or misread.** The quotes are shown so that a person can check them.
+- **Input limits.** A note is limited to 2,000 characters and the order fields to a few dozen; pasted text over a limit is refused with a message and nothing is sent to a model.
 - **Small evaluation.** 40 cases, 7 of them ambiguous, one model; the report lists its failures.
 
 ## License
