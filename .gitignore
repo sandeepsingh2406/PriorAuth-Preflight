@@ -13,6 +13,9 @@ scratch/
 PLAN.md
 NOTES.md
 
+# Planning documents (local only)
+plans/
+
 # Personal Claude Code settings
 .claude/settings.local.json
 
