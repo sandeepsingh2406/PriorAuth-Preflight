@@ -35,7 +35,31 @@ MAX_NOTE_CHARS = 20_000
 PASTED_CASE_ID = "pasted_note"
 # Only synthetic record numbers are ever carried onto the screen.
 RECORD_NUMBER = re.compile(r"(?:Record number|MRN):\s*(SYN-\d+)")
-APPROVE_LABEL = "Approve draft (logs decision only)"  # it records a decision; nothing is sent
+RUN_LABEL = "▶️ Run"
+APPROVE_LABEL = "✅ Approve draft (logs decision only)"  # it records a decision; nothing is sent
+EDIT_LABEL = "✏️ Edit"
+DISCARD_LABEL = "🗑️ Discard"
+REVIEWED_LABEL = "👀 Mark reviewed"
+
+# Colour means what an item does to the status: green fine, amber not ready, red needs a person,
+# gray not applicable, blue neutral. state -> (text colour, background, accent edge).
+PALETTE = {
+    "ok": ("#14532d", "#dcfce7", "#16a34a"),
+    "warn": ("#78350f", "#fef3c7", "#d97706"),
+    "bad": ("#7f1d1d", "#fee2e2", "#dc2626"),
+    "muted": ("#374151", "#e5e7eb", "#9ca3af"),
+    "info": ("#1e3a8a", "#dbeafe", "#3b82f6"),
+}
+# Solid colours with white text: status badges and the action buttons.
+SOLID = {
+    "badge-ready": "#15803d",
+    "badge-not_ready": "#b45309",
+    "badge-needs_review": "#b91c1c",
+    "btn-approve": "#15803d",
+    "btn-edit": "#1d4ed8",
+    "btn-discard": "#b91c1c",
+    "btn-reviewed": "#0f766e",
+}
 BANNER = """# PriorAuth Preflight
 
 **How it works**
@@ -49,6 +73,41 @@ STATUS_STYLE = {
     "NOT_READY": ("#b45309", "Some required items are missing or out of date."),
     "NEEDS_REVIEW": ("#b91c1c", "A person needs to read the evidence."),
 }
+
+
+def build_css() -> str:
+    """The page's colour rules, generated from PALETTE and SOLID so colours live in one place.
+
+    Fixed text only: nothing from a note or a form ever goes into the stylesheet.
+    """
+    rules = [
+        ".pill{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:600;font-size:.88em;white-space:nowrap}",
+        ".icon{margin-right:3px}",
+        ".badge{display:inline-block;padding:6px 14px;border-radius:8px;color:#fff;font-weight:700;font-size:1.1em}",
+        ".callout{padding:8px 12px;border-radius:8px;margin:6px 0;border-left:5px solid transparent}",
+        ".legend{font-size:.9em;opacity:.85;margin:4px 0 8px}",
+        ".evidence-table{border-collapse:collapse;width:100%}",
+        ".evidence-table td,.evidence-table th{border:1px solid rgba(128,128,128,.35);padding:5px 8px;vertical-align:top;text-align:left}",
+    ]
+    for state, (text, background, edge) in PALETTE.items():
+        rules.append(f".pill-{state}{{background:{background};color:{text}}}")
+        rules.append(f".callout-{state}{{background:{background};color:{text};border-left-color:{edge}}}")
+        rules.append(f".row-{state} td:first-child{{border-left:5px solid {edge}}}")
+        rules.append(f".gap-{state}{{border-left:4px solid {edge};padding-left:8px}}")
+    for name, colour in SOLID.items():
+        if name.startswith("badge-"):
+            rules.append(f".{name}{{background:{colour}}}")
+        else:  # !important so the button wins over the theme's own button colours
+            rules.append(
+                f".{name}, .{name}:hover{{background:{colour} !important;color:#fff !important;border-color:{colour} !important}}"
+            )
+            rules.append(f".{name}:hover{{filter:brightness(.92)}}")
+    return "\n".join(rules)
+
+
+def build_theme() -> gr.themes.Soft:
+    """A calm, rounded theme with an indigo primary (the Run button)."""
+    return gr.themes.Soft(primary_hue="indigo", neutral_hue="slate")
 
 
 class CaseForm(BaseModel):
@@ -424,7 +483,7 @@ def build_app(
                 drug = gr.Textbox(label="Drug")
                 dose = gr.Textbox(label="Dose")
                 schedule = gr.Textbox(label="Schedule")
-                run_button = gr.Button("Run", variant="primary")
+                run_button = gr.Button(RUN_LABEL, variant="primary")
             with gr.Column(scale=1):
                 status = gr.HTML()
                 notice = gr.HTML()
@@ -433,10 +492,10 @@ def build_app(
                     subject = gr.Textbox(label="Draft request to the care team (not sent): subject", interactive=True)
                     body = gr.Textbox(label="Body (you can edit it)", lines=8, interactive=True)
                     with gr.Row():
-                        approve = gr.Button(APPROVE_LABEL, variant="secondary")
-                        edit = gr.Button("Edit")
-                        discard = gr.Button("Discard")
-                reviewed = gr.Button("Mark reviewed", visible=False)
+                        approve = gr.Button(APPROVE_LABEL, variant="secondary", elem_classes=["btn-approve"])
+                        edit = gr.Button(EDIT_LABEL, elem_classes=["btn-edit"])
+                        discard = gr.Button(DISCARD_LABEL, elem_classes=["btn-discard"])
+                reviewed = gr.Button(REVIEWED_LABEL, visible=False, elem_classes=["btn-reviewed"])
                 decision = gr.HTML()
                 with gr.Accordion("Tool-call trace", open=False):
                     trace = gr.Textbox(label="Trace", lines=8, interactive=False)
@@ -502,7 +561,9 @@ def main(
         return 2
     demo = build_app(llm=llm, outreach_llm=outreach_llm, model_label=label)
     demo.queue(default_concurrency_limit=1)
-    demo.launch(server_name="127.0.0.1", share=False, show_error=False, inbrowser=False)
+    demo.launch(
+        server_name="127.0.0.1", share=False, show_error=False, inbrowser=False, css=build_css(), theme=build_theme()
+    )
     return 0
 
 

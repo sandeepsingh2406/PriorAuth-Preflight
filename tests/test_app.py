@@ -7,8 +7,17 @@ from pathlib import Path
 import pytest
 
 from src.app import (
+    APPROVE_LABEL,
     BANNER,
+    DISCARD_LABEL,
+    EDIT_LABEL,
+    PALETTE,
+    REVIEWED_LABEL,
+    RUN_LABEL,
+    SOLID,
     CaseForm,
+    build_css,
+    build_theme,
     build_app,
     case_id_for,
     decide,
@@ -23,8 +32,6 @@ from src.app import (
 from src.models import ChecklistItem, DraftText, ExtractedField, ExtractionResult, Order, PayerChecklist
 from src.run import load_case
 from src.tools import check_packet, lookup_payer_checklist
-
-APPROVE_LABEL = "Approve draft (logs decision only)"
 
 PREFIXES = {
     "diagnosis": ("Diagnosis:",),
@@ -295,7 +302,7 @@ def test_each_run_has_its_own_session_and_decisions_link_to_it(tmp_path: Path) -
 def test_app_builds_with_the_agreed_controls_and_no_telemetry() -> None:
     demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
     labels = {getattr(b, "value", None) for b in demo.blocks.values()}
-    for label in ["Run", APPROVE_LABEL, "Edit", "Discard", "Mark reviewed"]:
+    for label in [RUN_LABEL, APPROVE_LABEL, EDIT_LABEL, DISCARD_LABEL, REVIEWED_LABEL]:
         assert label in labels, label
     assert demo.analytics_enabled is False
 
@@ -309,6 +316,10 @@ def test_the_app_launches_locally_only(monkeypatch: pytest.MonkeyPatch) -> None:
     assert code == 0
     assert captured["share"] is False
     assert captured["server_name"] == "127.0.0.1"
+    assert ".btn-approve" in captured["css"]  # the colour rules are handed to launch
+    import gradio as gr
+
+    assert isinstance(captured["theme"], gr.themes.Soft)
 
 
 def test_main_without_a_model_name_explains_and_exits_2(
@@ -326,9 +337,9 @@ def test_only_run_is_a_primary_button_and_approve_is_neutral() -> None:
 
     demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
     variants = {b.value: b.variant for b in demo.blocks.values() if isinstance(b, gr.Button)}
-    assert variants["Run"] == "primary"
+    assert variants[RUN_LABEL] == "primary"
     assert variants[APPROVE_LABEL] == "secondary"
-    assert [v for v, variant in variants.items() if variant == "primary"] == ["Run"]
+    assert [v for v, variant in variants.items() if variant == "primary"] == [RUN_LABEL]
 
 
 def test_the_title_block_explains_how_it_works_in_three_steps_and_states_the_limits() -> None:
@@ -761,3 +772,88 @@ def test_a_conflicting_row_is_escaped(tmp_path: Path) -> None:
     html = _run("hand_08", tmp_path, conflicts={"stage": [evil]}, note=note + evil + "\n").evidence_html
     assert "<script>" not in html
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in _cells(_row(html, "stage"))[3]
+
+
+# --- colours and icons: the palette --------------------------------------------------------------
+
+
+def _luminance(hex_colour: str) -> float:
+    r, g, b = (int(hex_colour.lstrip("#")[i : i + 2], 16) / 255 for i in (0, 2, 4))
+    linear = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
+
+
+def _contrast(a: str, b: str) -> float:
+    hi, lo = sorted((_luminance(a), _luminance(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+@pytest.mark.parametrize("state", sorted(PALETTE))
+def test_pill_text_is_readable_on_its_background(state: str) -> None:
+    """WCAG AA needs 4.5:1 for normal text; a future colour edit cannot quietly break it."""
+    text, background, _edge = PALETTE[state]
+    assert _contrast(text, background) >= 4.5, state
+
+
+@pytest.mark.parametrize("name", sorted(SOLID))
+def test_white_text_is_readable_on_every_solid_badge_and_button(name: str) -> None:
+    assert _contrast("#ffffff", SOLID[name]) >= 4.5, name
+
+
+def test_the_palette_covers_the_states_the_plan_names() -> None:
+    assert {"ok", "warn", "bad", "muted", "info"} <= set(PALETTE)
+
+
+def test_each_state_has_its_own_colour() -> None:
+    backgrounds = [bg for _, bg, _ in PALETTE.values()]
+    assert len(set(backgrounds)) == len(backgrounds)
+
+
+def test_approve_edit_and_discard_are_three_different_colours() -> None:
+    colours = {SOLID["btn-approve"], SOLID["btn-edit"], SOLID["btn-discard"]}
+    assert len(colours) == 3
+
+
+def test_the_css_defines_every_class_the_page_uses() -> None:
+    css = build_css()
+    for state in PALETTE:
+        for prefix in ["pill", "callout", "row"]:
+            assert f".{prefix}-{state}" in css, (prefix, state)
+    for name in SOLID:
+        assert f".{name}" in css, name
+
+
+def test_each_button_rule_uses_its_own_colour_and_wins_over_the_theme() -> None:
+    css = build_css()
+    for name in ["btn-approve", "btn-edit", "btn-discard", "btn-reviewed"]:
+        rule = re.search(rf"\.{name}\b[^{{]*{{([^}}]*)}}", css).group(1)
+        assert SOLID[name] in rule and "!important" in rule, name
+
+
+def test_the_css_is_fixed_text_with_no_user_input() -> None:
+    assert build_css() == build_css()
+    assert "<" not in build_css()  # no markup can ride in a stylesheet
+
+
+def test_the_action_buttons_carry_their_colour_classes() -> None:
+    import gradio as gr
+
+    demo = build_app(llm=lambda p: ExtractionResult(fields=[]), outreach_llm=_outreach)
+    classes = {b.value: list(b.elem_classes or []) for b in demo.blocks.values() if isinstance(b, gr.Button)}
+    assert "btn-approve" in classes[APPROVE_LABEL]
+    assert "btn-edit" in classes[EDIT_LABEL]
+    assert "btn-discard" in classes[DISCARD_LABEL]
+    assert "btn-reviewed" in classes[REVIEWED_LABEL]
+
+
+def test_the_button_labels_carry_an_icon_and_keep_their_words() -> None:
+    assert RUN_LABEL.endswith("Run") and EDIT_LABEL.endswith("Edit") and DISCARD_LABEL.endswith("Discard")
+    assert APPROVE_LABEL.endswith("Approve draft (logs decision only)")
+    assert REVIEWED_LABEL.endswith("Mark reviewed")
+    assert all(label[0] not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" for label in [RUN_LABEL, APPROVE_LABEL, EDIT_LABEL, DISCARD_LABEL, REVIEWED_LABEL])
+
+
+def test_the_theme_is_the_soft_indigo_one() -> None:
+    import gradio as gr
+
+    assert isinstance(build_theme(), gr.themes.Soft)
