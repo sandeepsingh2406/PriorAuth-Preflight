@@ -1143,3 +1143,74 @@ def test_the_title_steps_and_the_never_sends_line_carry_icons() -> None:
     steps = [line for line in BANNER.splitlines() if line[:3] in ("1. ", "2. ", "3. ")]
     assert len(steps) == 3 and all(not line[3].isascii() for line in steps)  # an icon right after "1. "
     assert "🔒" in BANNER and "never sends" in BANNER
+
+
+# --- limits are enforced where a run starts: rejected input never reaches the model ----------------
+
+
+class _MustNotRun:
+    """A fake model that fails the test if it is ever called."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def __call__(self, prompt: str):
+        self.calls += 1
+        raise AssertionError("the model was called for rejected input")
+
+
+@pytest.mark.parametrize(
+    ("changes", "expected"),
+    [
+        ({"note": "x" * 2001}, "too long"),
+        ({"note": "x" * 1_000_000}, "too long"),
+        ({"drug": "d" * 81}, "drug"),
+        ({"dose": "d" * 41}, "dose"),
+        ({"schedule": "s" * 81}, "schedule"),
+        ({"order_date": "2026-02-30"}, "YYYY-MM-DD"),
+        ({"order_date": "20260504"}, "YYYY-MM-DD"),
+        ({"payer_id": "payer_z"}, "payer"),
+        ({"note": ""}, "note"),
+    ],
+)
+def test_rejected_input_gets_a_clear_message_and_never_reaches_the_model(tmp_path: Path, changes: dict, expected: str) -> None:
+    fake = _MustNotRun()
+    view = run_case(_form("hand_01", **changes), llm=fake, outreach_llm=fake, audit_path=tmp_path / "audit.jsonl")
+    assert view.error and expected in view.error
+    assert view.session is None and fake.calls == 0
+    assert _audit(tmp_path) == []
+
+
+@pytest.mark.parametrize(
+    "changes", [{"drug": "d" * 80}, {"dose": "d" * 40}, {"schedule": "s" * 80}, {"order_date": "2024-02-29"}]
+)
+def test_input_exactly_at_a_limit_still_runs(tmp_path: Path, changes: dict) -> None:
+    view = _run("hand_01", tmp_path, **changes)
+    assert view.error is None and view.session is not None
+
+
+def test_a_note_of_exactly_2000_characters_runs(tmp_path: Path) -> None:
+    _, note = load_case("hand_01")
+    padded = note + "\n" + "x" * (2000 - len(note) - 1)
+    assert len(padded) == 2000
+    assert _run("hand_01", tmp_path, note=padded).error is None
+
+
+def test_a_non_ascii_note_runs_end_to_end_and_its_quote_survives_intact(tmp_path: Path) -> None:
+    line = "Diagnóstico: carcinoma de pulmón 肺癌 ✔ 😀 (CIE-10 C34.90)"
+    _, note = load_case("hand_01")
+    text = note + line + "\n"
+    form = _form("hand_01", note=text)
+    fields = [f for f in _extraction(text)(None).fields if f.name != "diagnosis"] + [
+        ExtractedField(name="diagnosis", value="carcinoma", quote=line, found=True)
+    ]
+    view = run_case(form, llm=lambda p: ExtractionResult(fields=fields), outreach_llm=_outreach, audit_path=tmp_path / "audit.jsonl")
+    assert view.error is None
+    assert "Diagnóstico: carcinoma de pulmón 肺癌 ✔ 😀 (CIE-10 C34.90)" in _cells(_row(view.evidence_html, "diagnosis"))[3]
+    assert _result_pill(view.evidence_html, "diagnosis") == ("ok", "found")
+
+
+def test_the_old_20000_character_allowance_is_gone() -> None:
+    import src.app as app_module
+
+    assert not hasattr(app_module, "MAX_NOTE_CHARS") or app_module.MAX_NOTE_CHARS == 2000

@@ -26,12 +26,12 @@ from src.agents import (
     model_name,
     record_decision,
 )
+from src.guardrails import check_inputs
 from src.models import ChecklistItem, GapReport, Order, PayerChecklist
 from src.run import CASES_DIR, ENV_FILE, load_case
 from src.tools import lookup_payer_checklist
 
 PAYERS = ["payer_a", "payer_b", "payer_c"]
-MAX_NOTE_CHARS = 20_000
 PASTED_CASE_ID = "pasted_note"
 # Only synthetic record numbers are ever carried onto the screen.
 RECORD_NUMBER = re.compile(r"(?:Record number|MRN):\s*(SYN-\d+)")
@@ -224,20 +224,11 @@ def case_id_for(selected: str | None, note: str) -> str:
 
 
 def _to_order(form: CaseForm) -> tuple[Order | None, str | None]:
-    """Check the form. Returns an Order, or a plain-words message saying what to fix."""
-    if not form.note.strip():
-        return None, "Paste or choose a note first."
-    if len(form.note) > MAX_NOTE_CHARS:
-        return None, f"The note is too long (limit {MAX_NOTE_CHARS:,} characters)."
-    if form.payer_id not in PAYERS:
-        return None, "Choose a payer from the list."
-    try:
-        order_date = datetime.date.fromisoformat(form.order_date.strip())
-    except ValueError:
-        return None, "Enter the order date as YYYY-MM-DD."
-    for label, value in [("drug", form.drug), ("dose", form.dose), ("schedule", form.schedule)]:
-        if not value.strip():
-            return None, f"Enter the {label} from the order."
+    """Check the form with the guardrail limits. Returns an Order, or a plain-words message to fix."""
+    problem = check_inputs(form.note, form.payer_id, form.order_date, form.drug, form.dose, form.schedule, PAYERS)
+    if problem:
+        return None, problem
+    order_date = datetime.date.fromisoformat(form.order_date.strip())
     order = Order(
         case_id=case_id_for(form.case_id, form.note),
         payer_id=form.payer_id,
