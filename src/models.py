@@ -38,7 +38,7 @@ class Gap(BaseModel):
 
 
 class GapReport(BaseModel):
-    """Result of checking one packet. The Outreach agent sees only this."""
+    """Result of checking one packet."""
 
     case_id: str
     payer_id: str
